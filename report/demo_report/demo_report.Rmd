@@ -20,10 +20,11 @@ author:
     surname: Bakthavachalam
     email: vinodb@ischool.berkeley.edu
     affiliation: UC Berkeley, School of Information
-  - name: D. Alex Hughes
-    firstname: D. Alex 
-    surname: Hughes
-    email: dontatme@ischool.berkeley.edu
+  - name: Artem Lebedev
+    firstname: Artem 
+    surname: Lebedev
+    email: artem.lebedev@berkeley.edu
+    affiliation: McMaster University
 acknowledgements: | 
   The authors would like to thank their instructors from MIDS 271.
 abstract: | 
