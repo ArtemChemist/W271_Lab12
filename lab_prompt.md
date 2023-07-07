@@ -18,9 +18,11 @@ seasonal cycle. He was able to attribute this trend increase to growth
 in global rates of fossil fuel combustion. This trend has continued to
 the present, and is known as the “Keeling Curve.”
 
-    ## Warning: package 'tsibble' was built under R version 4.1.3
+    ## Warning: package 'tidyverse' was built under R version 4.2.2
 
-    ## Warning: package 'latex2exp' was built under R version 4.1.3
+    ## Warning: package 'tsibble' was built under R version 4.2.3
+
+    ## Warning: package 'latex2exp' was built under R version 4.2.3
 
 ![](lab_prompt_files/figure-gfm/plot%20the%20keeling%20curve-1.png)<!-- -->
 
@@ -74,9 +76,9 @@ addressing, and what are you going to find at the completion of your
 analysis. Here are a few resource that you might use to start this
 motivation.
 
--   [Wikipedia](https://en.wikipedia.org/wiki/Keeling_Curve)
--   [First Publication](./background/keeling_tellus_1960.pdf)
--   [Autobiography of Keeling](./background/keeling_annual_review.pdf)
+- [Wikipedia](https://en.wikipedia.org/wiki/Keeling_Curve)
+- [First Publication](./background/keeling_tellus_1960.pdf)
+- [Autobiography of Keeling](./background/keeling_annual_review.pdf)
 
 ## (3 points) Task 1a: CO2 data
 
