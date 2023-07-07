@@ -70,9 +70,25 @@ Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying t
 
 ```{r first-co2-plot, results='hide'}
 # note, MIDS students, you've got to make something is more compelling than this
-pdf(file = './figures/plot_1.pdf', height=5, width=10)
-  plot(co2, type = 'l')
-dev.off()
+# pdf(file = './figures/plot_1.pdf', height=5, width=10)
+  # plot(co2, type = 'l')
+# dev.off()
+```
+
+
+```{r plot the keeling curve, echo = FALSE}
+fig_1 <- tsibble::as_tsibble(co2) %>%
+  ggplot() + 
+  aes(x=index, y=value) + 
+  geom_line(color = 'steelblue') +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$)'),
+    subtitle = 'The "Keeling Curve"',
+    x = 'Month and Year',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+
+ggsave(filename = './figures/plot_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
 ```
 
 \begin{figure}
