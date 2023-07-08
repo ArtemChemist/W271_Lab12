@@ -19,7 +19,7 @@
 #
 # Contact:  Pieter Tans (pieter.tans@noaa.gov)
 #
-# File Creation: Fri Jul  7 05:00:29 2023
+# File Creation: Sat Jul  8 05:00:50 2023
 #
 # RECIPROCITY
 #
@@ -46,8 +46,6 @@
 # were suspended as of Nov. 29, 2022. Observations starting in December 2022 are from a site
 # at the Maunakea Observatories, approximately 21 miles north of the Mauna Loa Observatory.
 #
-1974,5,17,1974.3740,333.38
-1974,5,18,1974.3767,333.11
 1974,5,19,1974.3795,333.46
 1974,5,20,1974.3822,333.64
 1974,5,21,1974.3849,333.50
@@ -15166,3 +15164,4 @@
 2023,7,4,2023.5055,422.78
 2023,7,5,2023.5082,422.31
 2023,7,6,2023.5110,422.47
+2023,7,7,2023.5137,422.52

@@ -71,7 +71,7 @@ df <- read.table(file_path,
                  dec = ".", 
                  numerals = c("no.loss"), 
                  skip = 48)
-# Rename columns for convenince
+# Rename columns for convenience
 names(df) <- c("year", "month", "day", "date_dec", "ppm")
 # Create date column 
 df$date <- make_datetime(year = df$year,
@@ -81,21 +81,16 @@ df$date <- make_datetime(year = df$year,
 df <- df[5:6]
 
 # Aggregate by weeks:
-
-  #Calculate number of weeks passed for each date
-  start_date <- ymd("1974-05-17")
-  df$weeks <- floor(difftime(df$date, start_date, units = "weeks"))
+  #Find the date for the first day of that week
+  df$week <- floor_date(df$date, unit = "week", week_start = 1)
   # Aggregate by weeks
-  df <- df%>% group_by(weeks) %>% summarise(date = min(date), mean_ppm = mean(ppm))
-
-# df$first_day <- floor_date(df$date, unit = "week", week_start = 1)
-
+  df <- df%>% group_by(week) %>% summarise(ppm = mean(ppm))
+  
 # Convert to tsibble  
-co2_present <-df[2:3] %>% mutate(date = as.Date(date)) %>% 
-  as_tsibble(index = "date")
+co2_present <-df%>% mutate(week = as.Date(week)) %>% 
+  as_tsibble(index = "week")
 ```
   
-
 
 ## Recent Trends in Atmospheric Carbon 
 Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
