@@ -46,6 +46,14 @@ options(digits = 8)
 library(tidyverse)
 library(tsibble)
 library(latex2exp)
+library(dplyr)
+library(magrittr)
+library(patchwork)
+library(lubridate)
+library(feasts)
+library(forecast)
+library(sandwich)
+
 theme_set(theme_minimal())
 ```
 
@@ -84,18 +92,18 @@ df <- df[5:6]
   #Find the date for the first day of that week
   df$week <- floor_date(df$date, unit = "week", week_start = 1)
   # Aggregate by weeks
-  df <- df%>% group_by(week) %>% summarise(ppm = mean(ppm))
+  df <- df %>% group_by(week) %>% summarise(ppm = mean(ppm))
   
 # Convert to tsibble  
-co2_present <-df%>% mutate(week = as.Date(week)) %>% 
-  as_tsibble(index = "week")
+co2_present <-df %>% mutate(week = as.Date(week)) %>% 
+  as_tsibble(key = "ppm", index = "week")
 ```
   
 
 ## Recent Trends in Atmospheric Carbon 
-Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
+\textcolor{red}{Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report.}
 
-\textcolor{red}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
+Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
 
 ```{r plot the keeling curve, echo = FALSE}
 fig_2_1 <- co2_present %>%
@@ -116,25 +124,34 @@ ggsave(filename = './figures/plot_2_1.pdf', plot = fig_2_1, device = "pdf", unit
   \includegraphics[width=.8\linewidth]{./figures/plot_2_1.pdf}
   \caption{Recent trend in $CO_2$ concentration\label{fig:carbon}}
   \begin{figurenotes}
-    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with the exception of slight deceleration around 1990. Strong seasonal pattern is also present.
+    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with strong seasonal oscillations. This trends points to the need of de-seasoning before further analysis.
   \end{figurenotes}
 \end{figure} 
 
-\textcolor{red}{Even more, a careful examination of \autoref{tab:table_1} suggests some worrying trends in headings and columns. }
 
-\begin{table}
-  \caption{What is happening with headers?\label{tab:table_1}}
-  \begin{tabular}{lll}
-    \toprule 
-    & Heading 1 & Heading 2 \\
-    Row 1 & 1 & 2 \\
-    Row 2 & 3 & 4 \\
-    \bottomrule
-  \end{tabular}
-  \begin{tablenotes}
-    Table notes environment without optional leadin.
-  \end{tablenotes}
-\end{table}
+```{r}
+
+my_lag <- 52
+co2_present <- mutate(co2_present, diff = difference(ppm, lag=my_lag))
+co2_diff <- slice(co2_present, my_lag+1:nrow(co2_present))
+```
+
+
+```{r}
+diff_ts <- co2_diff %>% 
+  ggplot() + 
+  aes(x = time_index, y = diff) + geom_line()
+
+acf_plot<-co2_diff %>%
+  ACF(diff, type="correlation") %>% 
+  autoplot()  + labs (x = "lag", y = "ACF")
+
+pacf_plot<-co2_diff %>%  ACF(diff, type="partial") %>% 
+  autoplot() + labs (x = "lag", y = "PACF")
+
+grid.arrange(diff_ts, acf_plot, pacf_plot, nrow=1)
+```
+
 
 # Models and Forecasts 
 \textcolor{red}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
