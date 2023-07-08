@@ -98,25 +98,25 @@ Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1
 \textcolor{red}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 
 ```{r plot the keeling curve, echo = FALSE}
-fig_1 <- tsibble::as_tsibble(co2) %>%
+fig_2_1 <- co2_present %>%
   ggplot() + 
-  aes(x=index, y=value) + 
+  aes(x=week, y=ppm) + 
   geom_line(color = 'steelblue') +
   labs(
-    title = TeX(r'(Monthly Mean $CO_2$)'),
-    subtitle = 'The "Keeling Curve"',
-    x = 'Month and Year',
-    y = TeX(r'($CO_2$ parts per million)')
+    title = TeX(r'(Weekly Mean $CO_2$)'),
+    subtitle = 'Most recent measurements from Mona Loa station',
+    x = '',
+    y = TeX(r'(\[$CO_2$\], ppm)')
   )
 
-ggsave(filename = './figures/plot_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
+ggsave(filename = './figures/plot_2_1.pdf', plot = fig_2_1, device = "pdf", units = c("in"), height=5, width=10)
 ```
 
 \begin{figure}
-  \includegraphics[width=.8\linewidth]{./figures/plot_1.pdf}
-  \caption{An uncareful plot.\label{fig:carbon}}
+  \includegraphics[width=.8\linewidth]{./figures/plot_2_1.pdf}
+  \caption{Recent trend in $CO_2$ concentration\label{fig:carbon}}
   \begin{figurenotes}
-    After giving a declarative statement about what is in the plot, it is useful to provide a very concise interpretation of what you see, or how you read the plot. It should be possible for a reader to \textit{almost} read your entire report from tables, figures, and estimated models.
+    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with the exception of slight deceleration around 1990. Strong seasonal pattern is also present.
   \end{figurenotes}
 \end{figure} 
 
