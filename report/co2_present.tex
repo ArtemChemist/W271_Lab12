@@ -108,17 +108,12 @@ Biochemistry, \href{mailto:artem.lebedev@berkeley.edu}{artem.lebedev@berkeley.ed
 \Keywords{Replication, Modern Science}
 
 \begin{abstract}
-The year is 1997 and global attention is turning toward the consequences
-of human-actions in our environmental system. The IPCC has been in
-existence and studying these trends for more than ten years, and has
-released its second assessment report in 1995. In this report, the IPCC
-notes that the balance of the evidence suggests that human-actions play
-a role in the changing climate. Although, there is little political will
-to change this activity, neither have global progressive and
-conservative politicians broken into clear partisan camps. Here, we
-assess data from the Mona Loa observatory to describe and predict global
-\(CO_{2}\) concentrations under several possible scenarios. What we
-find, when we run the analysis, is going to be grim.
+One of the very interesting features of Keeling and colleagues' research
+is that they were able to evaluate, and re-evaluate the data as new
+series of measurements were released. This permitted the evaluation of
+previous models' performance and a much more difficult question: If
+their models' predictions were ``off'' was this the result of a failure
+of the model, or a change in the system?
 \end{abstract}
 
 
@@ -127,38 +122,36 @@ find, when we run the analysis, is going to be grim.
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-\textcolor{red}{Introduce the question to your audience. Suppose that they could be interested in the question, but they don't have a deep background in the area. What is the question that you are addressing, why is it worth addressing, and what are you going to find at the completion of your analysis. Here are a few resource that you might use to start this motivation.}
+\textcolor{red}{In this introduction, you can assume that your reader will have just read your 1997 report. In this introduc-
+tion, very briefly pose the question that you are evaluating, and describe what (if anything) has changed in
+the data generating process between 1997 and the present.}
 
-\textcolor{red}{Understanding a changing climate, and what it means for the earth's inhabitants is of growing interest to the scientific and policy community. Although, at this point in 1997 it is not entirely clear what the consequences of this growing awareness will be, in this report we present likely outcomes under "business-as-usual" scenarios. In doing so, our hope, is to establish a series of possible futures, and, as evidence, technology, and policy develop over the coming decades, that we can weigh the impacts that carbon-emission reduction efforts might take.}
+\hypertarget{mona-loa-co_2-data}{%
+\section{\texorpdfstring{Mona Loa \(CO_{2}\)
+Data}{Mona Loa CO\_\{2\} Data}}\label{mona-loa-co_2-data}}
 
-\hypertarget{carbon-emissions}{%
-\subsection{Carbon Emissions}\label{carbon-emissions}}
+The most current data is provided by the United States' National Oceanic
+and Atmospheric Administration, on a data page
+{[}\href{https://gml.noaa.gov/ccgg/trends/data.html}{here}{]}. Gather
+the most recent weekly data from this page. (A group that is interested
+in even more data management might choose to work with the
+\href{https://gml.noaa.gov/aftp/data/trace_gases/co2/in-situ/surface/mlo/co2_mlo_surface-insitu_1_ccgg_HourlyData.txt}{hourly
+data}.)
 
-\textcolor{red}{What are are carbon emissions, and why should anyone care about them? In this section, we briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$, and the scientific community's growing understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures.}
+Create a data pipeline that starts by reading from the appropriate URL,
+and ends by saving an object called \texttt{co2\_present} that is a
+suitable time series object.
 
-\hypertarget{co_2-measurement-and-data}{%
-\section{\texorpdfstring{\(CO_{2}\) Measurement and
-Data}{CO\_\{2\} Measurement and Data}}\label{co_2-measurement-and-data}}
+\hypertarget{recent-trends-in-atmospheric-carbon}{%
+\subsection{Recent Trends in Atmospheric
+Carbon}\label{recent-trends-in-atmospheric-carbon}}
 
-\hypertarget{measuring-atmospheric-carbon}{%
-\subsection{Measuring Atmospheric
-Carbon}\label{measuring-atmospheric-carbon}}
-
-\textcolor{red}{Crucial to forecasting levels of atmospheric carbon is reliable measurement of this concept.\footnote{\textcolor{red}{MIDS students: Think about this, for a moment. Suppose that you were to measure atmospheric carbon directly outside a steel-foundry in Michigan. How reliable a measurement of global atmospheric carbon do you think this would be? What if that were the only measure that you had, would you still propose to write this paper? I certainly hope not.}} Several reference measurements have been proposed: Measurement 1 in Washington, DC; Measurement 2 in Bern Switzerland ... . In this study, we rely on ... }
-
-\hypertarget{historical-trends-in-atmospheric-carbon}{%
-\subsection{Historical Trends in Atmospheric
-Carbon}\label{historical-trends-in-atmospheric-carbon}}
-
-Conduct a comprehensive Exploratory Data Analysis on the \texttt{co2}
-series. This should include (without being limited to) a
-\href{https://gml.noaa.gov/ccgg/about/co2_measurements.html}{description
-of how, where and why} the data is generated, a thorough investigation
-of the trend, seasonal and irregular elements. Trends both in levels and
-growth rates should be discussed (consider expressing longer-run growth
-rates as annualized averages).
-
-\textcolor{red}{What you report in the deliverable should not be your own process of discovery, but rather a guided discussion that you have constructed so that your audience can come to an understanding as succinctly and successfully as possible. This means that figures should be thoughtfully constructed and what you learn from them should be discussed in text; to the extent that there is any raw output from your analysis, you should intend for people to read and interpret it, and you should write your own interpretation as well. }
+Conduct the same EDA on this data. Describe how the Keeling Curve
+evolved from 1997 to the present, noting where the series seems to be
+following similar trends to the series that you ``evaluated in 1997''
+and where the series seems to be following different trends. This EDA
+can use the same, or very similar tools and views as you provided in
+your 1997 report.
 
 \textcolor{red}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 
@@ -194,14 +187,12 @@ rates as annualized averages).
 \hypertarget{linear-models}{%
 \subsection{Linear Models}\label{linear-models}}
 
-To begin, we fit a model of the form:
+\textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) }
 
 \begin{equation}
 \label{eq:one}
 \text{CO}_{2} = \phi_{0} + \phi_{1} + \epsilon_{eit}
 \end{equation}
-
-\textcolor{red}{which, a student of the class will immediately realize is a nonsense model that is senseless. However, writing out the model form that you are going to estimate makes it very clear what you're assuming about the data generating process. It also allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports. }
 
 We estimate best fitting parameters on this model in the following way,
 
@@ -214,12 +205,29 @@ We estimate best fitting parameters on this model in the following way,
 \hypertarget{arima-models}{%
 \subsection{ARIMA Models}\label{arima-models}}
 
-\textcolor{red}{Sure we also fit some ARIMA models. And talk about them. }
+\textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present.}
 
-\hypertarget{forecasts}{%
-\subsection{Forecasts}\label{forecasts}}
+\hypertarget{performance-of-1997-linear-and-arima-models}{%
+\subsection{Performance of 1997 linear and ARIMA
+models}\label{performance-of-1997-linear-and-arima-models}}
 
-\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be 10.322, with a prediction interval that ranges from [8.186, 12.457]}
+\textcolor{red}{In 1997 you made predictions about the first time that CO2 would cross 420 ppm. How close were your models to the truth?}
+
+\textcolor{red}{After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.)}
+
+\hypertarget{best-models-on-present-data}{%
+\subsection{Best models on present
+data}\label{best-models-on-present-data}}
+
+\textcolor{red}{Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.}
+
+\hypertarget{forecasts-how-bad-could-it-get}{%
+\subsection{Forecasts: How bad could it
+get?}\label{forecasts-how-bad-could-it-get}}
+
+\textcolor{red}{With the non-seasonally adjusted data series, generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2122. How confident are you that these will be accurate predictions?}
+
+\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be 10.598, with a prediction interval that ranges from [8.204, 12.992]}\}
 
 \hypertarget{conclusions}{%
 \section{Conclusions}\label{conclusions}}

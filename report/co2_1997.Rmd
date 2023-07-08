@@ -28,7 +28,7 @@ author:
 acknowledgements: | 
   The authors would like to thank their instructors from MIDS 271.
 abstract: | 
-  The year is 1997 and global attention is turning toward the consequences of human-actions in our environmental system. The IPCC has been in existence and studying these trends for more than ten years, and has released its second assessment report in 1995. In this report, the IPCC notes that the balance of the evidence suggests that human-actions play a role in the changing climate. Although, there is little political will to change this activity, neither have global progressive and conservative politicians broken into clear partisan camps. Here, we assess data from the Mona Loa observatory to describe and predict global $CO_{2}$ concentrations under several possible scenarios. What we find, when we run the analysis, is going to be grim. 
+  The year is 1997 and global attention is turning toward the consequences of human-actions in our environmental system. The IPCC has been in existence and studying these trends for more than ten years, and has released its second assessment report in 1995. In this report, the IPCC notes that the balance of the evidence suggests that human-actions play a role in the changing climate. Although, there is little political will to change this activity, neither have global progressive and conservative politicians broken into clear partisan camps. Here, we assess data from the Mona Loa observatory to describe and predict global $CO_{2}$ concentrations under several possible scenarios. What we find, when we run the analysis, is going to be grim.
 header-includes: 
   - '\usepackage{graphicx}'
   - '\usepackage{booktabs}'
@@ -37,7 +37,7 @@ output: rticles::aea_article
 
 ```{r setup, echo=FALSE}
 ## default to not show code, unless we ask for it.
-knitr::opts_chunk$set(echo=FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo=FALSE, warning = FALSE, dpi=1000)
 options(digits = 3)
 ```
 
@@ -46,35 +46,30 @@ options(digits = 3)
 library(tidyverse)
 library(tsibble)
 library(latex2exp)
-
 theme_set(theme_minimal())
-knitr::opts_chunk$set(dpi=1000)
 ```
 
+# Introduction
 
-Understanding a changing climate, and what it means for the earth's inhabitants is of growing interest to the scientific and policy community. Although, at this point in 1997 it is not entirely clear what the consequences of this growing awareness will be, in this report we present likely outcomes under "business-as-usual" scenarios. In doing so, our hope, is to establish a series of possible futures, and, as evidence, technology, and policy develop over the coming decades, that we can weigh the impacts that carbon-emission reduction efforts might take. 
+\textcolor{red}{Introduce the question to your audience. Suppose that they could be interested in the question, but they don't have a deep background in the area. What is the question that you are addressing, why is it worth addressing, and what are you going to find at the completion of your analysis. Here are a few resource that you might use to start this motivation.} 
 
-# Background 
+\textcolor{red}{Understanding a changing climate, and what it means for the earth's inhabitants is of growing interest to the scientific and policy community. Although, at this point in 1997 it is not entirely clear what the consequences of this growing awareness will be, in this report we present likely outcomes under "business-as-usual" scenarios. In doing so, our hope, is to establish a series of possible futures, and, as evidence, technology, and policy develop over the coming decades, that we can weigh the impacts that carbon-emission reduction efforts might take.}
+
 ## Carbon Emissions 
-What are are carbon emissions, and why should anyone care about them? In this section, we briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$, and the scientific community's growing understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures. 
+\textcolor{red}{What are are carbon emissions, and why should anyone care about them? In this section, we briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$, and the scientific community's growing understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures.}
 
-Blah blah blah... 
-
-# Measurement and Data 
+# $CO_{2}$ Measurement and Data 
 ## Measuring Atmospheric Carbon 
-Crucial to forecasting levels of atmospheric carbon is reliable measurement of this concept.\footnote{MIDS students: Think about this, for a moment. Suppose that you were to measure atmospheric carbon directly outside a steel-foundry in Michigan. How reliable a measurement of global atmospheric carbon do you think this would be? What if that were the only measure that you had, would you still propose to write this paper? I certainly hope not.} Several reference measurements have been proposed: Measurement 1 in Washington, DC; Measurement 2 in Bern Switzerland ... . In this study, we rely on ... 
+\textcolor{red}{Crucial to forecasting levels of atmospheric carbon is reliable measurement of this concept.\footnote{\textcolor{red}{MIDS students: Think about this, for a moment. Suppose that you were to measure atmospheric carbon directly outside a steel-foundry in Michigan. How reliable a measurement of global atmospheric carbon do you think this would be? What if that were the only measure that you had, would you still propose to write this paper? I certainly hope not.}} Several reference measurements have been proposed: Measurement 1 in Washington, DC; Measurement 2 in Bern Switzerland ... . In this study, we rely on ... }
 
 ## Historical Trends in Atmospheric Carbon 
 
-Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this? 
+Conduct a comprehensive Exploratory Data Analysis on the `co2` series. This should include (without being limited to) a [description of how, where and why ](https://gml.noaa.gov/ccgg/about/co2_measurements.html) the data is generated, a thorough investigation of the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed (consider expressing longer-run growth rates as annualized averages).
 
-```{r first-co2-plot, results='hide'}
-# note, MIDS students, you've got to make something is more compelling than this
-# pdf(file = './figures/plot_1.pdf', height=5, width=10)
-  # plot(co2, type = 'l')
-# dev.off()
-```
+\textcolor{red}{What you report in the deliverable should not be your own process of discovery, but rather a guided discussion that you have constructed so that your audience can come to an understanding as succinctly and successfully as possible. This means that figures should be thoughtfully constructed and what you learn from them should be discussed in text; to the extent that there is any raw output from your analysis, you should intend for people to read and interpret it, and you should write your own interpretation as well. }
 
+
+\textcolor{red}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 
 ```{r plot the keeling curve, echo = FALSE}
 fig_1 <- tsibble::as_tsibble(co2) %>%
@@ -99,7 +94,7 @@ ggsave(filename = './figures/plot_1.pdf', plot = fig_1, device = "pdf", units = 
   \end{figurenotes}
 \end{figure} 
 
-Even more, a careful examination of \autoref{tab:table_1} suggests some worrying trends in headings and columns. 
+\textcolor{red}{Even more, a careful examination of \autoref{tab:table_1} suggests some worrying trends in headings and columns. }
 
 \begin{table}
   \caption{What is happening with headers?\label{tab:table_1}}
@@ -116,18 +111,18 @@ Even more, a careful examination of \autoref{tab:table_1} suggests some worrying
 \end{table}
 
 # Models and Forecasts 
-While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. 
+\textcolor{red}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
 ## Linear Models 
 
-To begin, we fit a model of the form: 
+\textcolor{red}{Fit a linear time trend model to the `co2` series, and examine the characteristics of the residuals. Compare this to a quadratic time trend model. Discuss whether a logarithmic transformation of the data would be appropriate. Fit a polynomial time trend model that incorporates seasonal dummy variables, and use this model to generate forecasts to the year 2020.}
 
 \begin{equation}
 \label{eq:one}
 \text{CO}_{2} = \phi_{0} + \phi_{1} + \epsilon_{eit}
 \end{equation} 
 
-which, a student of the class will immediately realize is a nonsense model that is senseless. However, writing out the model form that you are going to estimate makes it very clear what you're assuming about the data generating process. It also allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports. 
+\textcolor{red}{which, a student of the class will immediately realize is a nonsense model that is senseless. However, writing out the model form that you are going to estimate makes it very clear what you're assuming about the data generating process. It also allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports. }
 
 We estimate best fitting parameters on this model in the following way, 
 ```{r make fake data}
@@ -145,7 +140,7 @@ model_1 <- lm(y ~ x, data = d)
 
 ## ARIMA Models 
 
-Sure we also fit some ARIMA models. And talk about them. 
+\textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
 
 ## Forecasts 
 
@@ -158,11 +153,11 @@ prediction_1 <- predict(
 ```
 
 
-Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be `r prediction_1[1,1]`, with a prediction interval that ranges from [`r prediction_1[1,2]`, `r prediction_1[1,3]`]
+\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be `r prediction_1[1,1]`, with a prediction interval that ranges from [`r prediction_1[1,2]`, `r prediction_1[1,3]`]}
 
 # Conclusions 
 
-What to conclude is unclear. 
+\textcolor{red}{What to conclude is unclear. }
 
 \bibliographystyle{aea}
 \bibliography{references}
@@ -170,4 +165,4 @@ What to conclude is unclear.
 \appendix
 \section{Appendix: Model Robustness}
 
-While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. 
+\textcolor{red}{While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. }
