@@ -38,7 +38,7 @@ output: rticles::aea_article
 ```{r setup, echo=FALSE}
 ## default to not show code, unless we ask for it.
 knitr::opts_chunk$set(echo=FALSE, warning = FALSE, dpi=1000)
-options(digits = 3)
+options(digits = 8)
 ```
 
 
@@ -56,9 +56,46 @@ tion, very briefly pose the question that you are evaluating, and describe what 
 the data generating process between 1997 and the present.} 
 
 # Mona Loa $CO_{2}$ Data 
-The most current data is provided by the United States' National Oceanic and Atmospheric Administration, on a data page [[here](https://gml.noaa.gov/ccgg/trends/data.html)]. Gather the most recent weekly data from this page. (A group that is interested in even more data management might choose to work with the [hourly data](https://gml.noaa.gov/aftp/data/trace_gases/co2/in-situ/surface/mlo/co2_mlo_surface-insitu_1_ccgg_HourlyData.txt).) 
+We first download data Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
 
-Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
+```{r data download, results='hide'}
+url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv"  # URL
+file_path <- "./data/raw_daily_data.csv"  #Destination file
+download.file(url, file_path, mode = "w")
+```
+
+```{r convert csv to tsibble}
+#read csv into a dataframe
+df <- read.table(file_path, 
+                 sep = ",", 
+                 dec = ".", 
+                 numerals = c("no.loss"), 
+                 skip = 48)
+# Rename columns for convenince
+names(df) <- c("year", "month", "day", "date_dec", "ppm")
+# Create date column 
+df$date <- make_datetime(year = df$year,
+                                    month= df$month,
+                                    day = df$day)
+# Drop unneeded columns
+df <- df[5:6]
+
+# Aggregate by weeks:
+
+  #Calculate number of weeks passed for each date
+  start_date <- ymd("1974-05-17")
+  df$weeks <- floor(difftime(df$date, start_date, units = "weeks"))
+  # Aggregate by weeks
+  df <- df%>% group_by(weeks) %>% summarise(date = min(date), mean_ppm = mean(ppm))
+
+# df$first_day <- floor_date(df$date, unit = "week", week_start = 1)
+
+# Convert to tsibble  
+co2_present <-df[2:3] %>% mutate(date = as.Date(date)) %>% 
+  as_tsibble(index = "date")
+```
+  
+
 
 ## Recent Trends in Atmospheric Carbon 
 Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
