@@ -163,18 +163,43 @@ ggplot() + aes(x = index, y = value) +
 
 \textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
 
-## Forecasts 
-
-```{r}
-prediction_1 <- predict(
-  object = model_lin, 
-  newdata = data.frame(value=11), 
-  interval = 'prediction'
-)
+```{r Split into test and train, echo = TRUE}
+my_lag <- 12
+co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
+co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
+co2_ts <- slice(co2_ts, my_lag + 2:nrow(co2_ts))
 ```
 
+```{r Explore model space}
+# Generate a set of models AR(1)-AR(10) and MA(1)-MA(10)
+# with first and second degree of differencing.
+# Select the model with the lowest BIC
 
-\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be `r prediction_1[1,1]`, with a prediction interval that ranges from [`r prediction_1[1,2]`, `r prediction_1[1,3]`]}
+model.bic <- co2_ts %>%
+  model(ARIMA(deseasoned ~ 1 + pdq(1:10, 1:2, 1:10) + PDQ(0, 0, 0),
+    ic = "bic",
+    stepwise = F, greedy = F
+  ))
+
+# Report the winning model parameters
+model.bic %>% report()
+```
+
+```{r Make final model}
+hist_arima <- arima(co2_ts$value,
+  order = c(1, 1, 1),
+  seasonal = list(order = c(0, 1, 1), period = 12)
+)
+hist_arima
+```
+## Forecasts 
+
+```{r test}
+frcst_length <- 36
+prediction_1 <- forecast(hist_arima, h=frcst_length)
+```
+
+\textcolor{red}{Generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?}
 
 # Conclusions 
 
