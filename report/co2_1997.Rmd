@@ -32,6 +32,7 @@ abstract: |
 header-includes: 
   - '\usepackage{graphicx}'
   - '\usepackage{booktabs}'
+  - '\usepackage{wrapfig}'
 output: rticles::aea_article
 ---
 
@@ -63,16 +64,8 @@ theme_set(theme_minimal())
 \textcolor{red}{What are are carbon emissions, and why should anyone care about them? Briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$}
 \textcolor{red}{What is the current understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures.}
 
-# $ Atmospheric CO_{2}$ Measurement and Data 
+# Atmospheric $CO_{2}$ Measurement and Data 
 \textcolor{red}{Discuss the methods and locations for measurments of CO2.}
-
-# Exploratory analysis of historical trends in atmospheric $CO_{2}$
-
-\textcolor{red}{Description how, where and why the data is generated}
-
-\textcolor{red}{Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed}
-
-\textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 
 ```{r plot the keeling curve, echo = FALSE}
 fig_1 <- tsibble::as_tsibble(co2) %>%
@@ -80,8 +73,6 @@ fig_1 <- tsibble::as_tsibble(co2) %>%
   aes(x=index, y=value) + 
   geom_line(color = 'steelblue') +
   labs(
-    title = TeX(r'(Monthly Mean $CO_2$)'),
-    subtitle = 'The "Keeling Curve"',
     x = 'Month and Year',
     y = TeX(r'($CO_2$ parts per million)')
   )
@@ -89,13 +80,25 @@ fig_1 <- tsibble::as_tsibble(co2) %>%
 ggsave(filename = './figures/plot_1_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
 ```
 
-\begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot_1_1.pdf}
-  \caption{Historic trend in $CO_2$ concentration\label{fig:carbon}}
-  \begin{figurenotes}
-    $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. These patterns point to the need of de-seasoning and de-trending before further analysis.
-  \end{figurenotes}
-\end{figure} 
+# Exploratory analysis of historical trends in atmospheric $CO_{2}$
+\begingroup
+\setlength{\intextsep}{12pt}
+\setlength{\columnsep}{12pt}
+\begin{wrapfigure}[17]{l}{0.5\textwidth}
+    \centering\includegraphics[width=1\linewidth]{./figures/plot_1_1.pdf}
+    \caption{Historic trend in monthly mean [$CO_2$]\label{fig:carbon}}
+    \begin{figurenotes}
+      $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. These patterns point to the need of de-seasoning and de-trending before further analysis.
+    \end{figurenotes}
+\end{wrapfigure}
+\par
+\textcolor{red}{Description how, where and why the data is generated}
+\par
+\textcolor{red}{Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed}
+\par
+\textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
+\par
+\endgroup
 
 # Models and Forecasts 
 \textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
