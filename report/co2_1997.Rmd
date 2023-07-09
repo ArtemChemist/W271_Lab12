@@ -51,25 +51,28 @@ theme_set(theme_minimal())
 
 # Introduction
 
-\textcolor{red}{Introduce the question to your audience. Suppose that they could be interested in the question, but they don't have a deep background in the area. What is the question that you are addressing, why is it worth addressing, and what are you going to find at the completion of your analysis. Here are a few resource that you might use to start this motivation.} 
+\textcolor{red}{ What is the question that you are addressing} 
 
-\textcolor{red}{Understanding a changing climate, and what it means for the earth's inhabitants is of growing interest to the scientific and policy community. Although, at this point in 1997 it is not entirely clear what the consequences of this growing awareness will be, in this report we present likely outcomes under "business-as-usual" scenarios. In doing so, our hope, is to establish a series of possible futures, and, as evidence, technology, and policy develop over the coming decades, that we can weigh the impacts that carbon-emission reduction efforts might take.}
+\textcolor{red}{why is it worth addressing}
+
+\textcolor{red}{What are you going to find at the completion of your analysis.}
+
+\textcolor{blue}{Understanding a changing climate, and what it means for the earth's inhabitants is of growing interest to the scientific and policy community. Although, at this point in 1997 it is not entirely clear what the consequences of this growing awareness will be, in this report we present likely outcomes under "business-as-usual" scenarios. In doing so, our hope, is to establish a series of possible futures, and, as evidence, technology, and policy develop over the coming decades, that we can weigh the impacts that carbon-emission reduction efforts might take.}
 
 ## Carbon Emissions 
-\textcolor{red}{What are are carbon emissions, and why should anyone care about them? In this section, we briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$, and the scientific community's growing understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures.}
+\textcolor{red}{What are are carbon emissions, and why should anyone care about them? Briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$}
+\textcolor{red}{What is the current understanding of the linkage between atmospheric $CO_{2}$ and global average temperatures.}
 
-# $CO_{2}$ Measurement and Data 
-## Measuring Atmospheric Carbon 
-\textcolor{red}{Crucial to forecasting levels of atmospheric carbon is reliable measurement of this concept.\footnote{\textcolor{red}{MIDS students: Think about this, for a moment. Suppose that you were to measure atmospheric carbon directly outside a steel-foundry in Michigan. How reliable a measurement of global atmospheric carbon do you think this would be? What if that were the only measure that you had, would you still propose to write this paper? I certainly hope not.}} Several reference measurements have been proposed: Measurement 1 in Washington, DC; Measurement 2 in Bern Switzerland ... . In this study, we rely on ... }
+# $ Atmospheric CO_{2}$ Measurement and Data 
+\textcolor{red}{Discuss the methods and locations for measurments of CO2.}
 
-## Historical Trends in Atmospheric Carbon 
+# Exploratory analysis of historical trends in atmospheric $CO_{2}$
 
-Conduct a comprehensive Exploratory Data Analysis on the `co2` series. This should include (without being limited to) a [description of how, where and why ](https://gml.noaa.gov/ccgg/about/co2_measurements.html) the data is generated, a thorough investigation of the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed (consider expressing longer-run growth rates as annualized averages).
+\textcolor{red}{Description how, where and why the data is generated}
 
-\textcolor{red}{What you report in the deliverable should not be your own process of discovery, but rather a guided discussion that you have constructed so that your audience can come to an understanding as succinctly and successfully as possible. This means that figures should be thoughtfully constructed and what you learn from them should be discussed in text; to the extent that there is any raw output from your analysis, you should intend for people to read and interpret it, and you should write your own interpretation as well. }
+\textcolor{red}{Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed}
 
-
-\textcolor{red}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
+\textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 
 ```{r plot the keeling curve, echo = FALSE}
 fig_1 <- tsibble::as_tsibble(co2) %>%
@@ -83,46 +86,32 @@ fig_1 <- tsibble::as_tsibble(co2) %>%
     y = TeX(r'($CO_2$ parts per million)')
   )
 
-ggsave(filename = './figures/plot_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
+ggsave(filename = './figures/plot_1_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
 ```
 
-\begin{figure}
-  \includegraphics[width=.8\linewidth]{./figures/plot_1.pdf}
-  \caption{An uncareful plot.\label{fig:carbon}}
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot_1_1.pdf}
+  \caption{Historic trend in $CO_2$ concentration\label{fig:carbon}}
   \begin{figurenotes}
-    After giving a declarative statement about what is in the plot, it is useful to provide a very concise interpretation of what you see, or how you read the plot. It should be possible for a reader to \textit{almost} read your entire report from tables, figures, and estimated models.
+    $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. These patterns point to the need of de-seasoning and de-trending before further analysis.
   \end{figurenotes}
 \end{figure} 
 
-\textcolor{red}{Even more, a careful examination of \autoref{tab:table_1} suggests some worrying trends in headings and columns. }
-
-\begin{table}
-  \caption{What is happening with headers?\label{tab:table_1}}
-  \begin{tabular}{lll}
-    \toprule 
-    & Heading 1 & Heading 2 \\
-    Row 1 & 1 & 2 \\
-    Row 2 & 3 & 4 \\
-    \bottomrule
-  \end{tabular}
-  \begin{tablenotes}
-    Table notes environment without optional leadin.
-  \end{tablenotes}
-\end{table}
-
 # Models and Forecasts 
-\textcolor{red}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
+\textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
-## Linear Models 
+## Linear and Polynomial Models 
 
 \textcolor{red}{Fit a linear time trend model to the `co2` series, and examine the characteristics of the residuals. Compare this to a quadratic time trend model. Discuss whether a logarithmic transformation of the data would be appropriate. Fit a polynomial time trend model that incorporates seasonal dummy variables, and use this model to generate forecasts to the year 2020.}
 
 \begin{equation}
 \label{eq:one}
-\text{CO}_{2} = \phi_{0} + \phi_{1} + \epsilon_{eit}
+\text{CO}_{2} = \phi_{0} + \phi_{1}t + \epsilon_{eit}
 \end{equation} 
 
-\textcolor{red}{which, a student of the class will immediately realize is a nonsense model that is senseless. However, writing out the model form that you are going to estimate makes it very clear what you're assuming about the data generating process. It also allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports. }
+\textcolor{red}{ writing out a model allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports.}
+
+This is a general form of a linear model, where $CO_{2}$ concentration is modeled asa linear function of time and a random error.
 
 We estimate best fitting parameters on this model in the following way, 
 ```{r make fake data}
