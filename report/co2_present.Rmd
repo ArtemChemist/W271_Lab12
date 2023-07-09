@@ -71,7 +71,6 @@ url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv" # URL
 file_path <- "./data/raw_daily_data.csv" # Destination file
 download.file(url, file_path, mode = "w")
 ```
-
 ```{r convert csv to tsibble}
 # read csv into a dataframe
 df <- read.table(file_path,
@@ -80,7 +79,7 @@ df <- read.table(file_path,
   numerals = c("no.loss"),
   skip = 48
 )
-# Rename columns for convenince
+# Rename columns for convenience
 names(df) <- c("year", "month", "day", "date_dec", "ppm")
 # Create date column
 df$date <- make_datetime(
@@ -91,24 +90,22 @@ df$date <- make_datetime(
 # Drop unneeded columns
 df <- df[5:6]
 
-# Aggregate by weeks:
-
-# Calculate number of weeks passed for each date
-start_date <- ymd("1974-05-17")
-df$weeks <- floor(difftime(df$date, start_date, units = "weeks"))
-# Aggregate by weeks
-df <- df %>%
-  group_by(weeks) %>%
-  summarise(date = min(date), mean_ppm = mean(ppm))
-
-# df$first_day <- floor_date(df$date, unit = "week", week_start = 1)
-
 # Convert to tsibble
-co2_present <- df[2:3] %>%
+df <- df %>%
   mutate(date = as.Date(date)) %>%
   as_tsibble(index = "date")
+
+# Aggregate by weeks:
+co2_present <- df %>%
+  index_by(week = ~ yearweek(.)) %>%
+  summarise( ppm = mean(ppm) )
+
+# Fill missing values with the average of the nearest existing ones
+co2_present <- co2_present  %>% 
+  fill_gaps(.full = TRUE) %>%
+  fill(ppm, .direction = "downup") %>%
+  fill(ppm, .direction = "updown")
 ```
-  
 
 
 ## Recent Trends in Atmospheric Carbon 
@@ -146,19 +143,18 @@ co2_present <- mutate(co2_present, diff = difference(ppm, lag = my_lag))
 co2_diff <- slice(co2_present, my_lag + 1:nrow(co2_present))
 ```
 
-
 ```{r}
 diff_ts <- co2_diff %>%
   ggplot() +
-  aes(x = time_index, y = diff) +
+  aes(x = week, y = ppm) +
   geom_line()
 
 acf_plot <- co2_diff %>%
-  ACF(diff, type = "correlation") %>%
+  ACF(ppm, type = "correlation") %>%
   autoplot() + labs(x = "lag", y = "ACF")
 
 pacf_plot <- co2_diff %>%
-  ACF(diff, type = "partial") %>%
+  ACF(ppm, type = "partial") %>%
   autoplot() + labs(x = "lag", y = "PACF")
 
 grid.arrange(diff_ts, acf_plot, pacf_plot, nrow = 1)
