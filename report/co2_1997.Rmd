@@ -126,7 +126,7 @@ ggsave(filename = './figures/plot_1_1.pdf', plot = fig_1, device = "pdf", units 
 # Models and Forecasts 
 \textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
-## Linear and Polynomial Models 
+## Linear and Polynomial models 
 
 \textcolor{red}{Fit a linear time trend model to the `co2` series, and examine the characteristics of the residuals. Compare this to a quadratic time trend model. Discuss whether a logarithmic transformation of the data would be appropriate. Fit a polynomial time trend model that incorporates seasonal dummy variables, and use this model to generate forecasts to the year 2020.}
 
@@ -159,7 +159,7 @@ ggplot() + aes(x = index, y = value) +
 ```
 
 
-## ARIMA Models 
+## ARIMA times series model
 
 \textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
 
@@ -192,7 +192,6 @@ hist_arima <- arima(co2_ts$value,
 )
 hist_arima
 ```
-## Forecasts 
 
 ```{r forecast to 2022}
 frcst_length <- 300
@@ -225,6 +224,8 @@ ggsave(filename = "./figures/plot1_frcst2022.pdf", plot = forecast_plot, device 
     Residuals appear to be white noise
   \end{figurenotes}
 \end{figure}
+
+## Forecast atmospheric $CO_{2}$ growth
 
 \textcolor{red}{Generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?}
 
