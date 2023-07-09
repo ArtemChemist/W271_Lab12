@@ -54,7 +54,14 @@ library(lubridate)
 library(feasts)
 library(forecast)
 library(sandwich)
-
+if (!"fable" %in% rownames(installed.packages())) {
+  install.packages("fable")
+}
+library(fable)
+if (!"car" %in% rownames(installed.packages())) {
+  install.packages("car")
+}
+library(car)
 theme_set(theme_minimal())
 ```
 
@@ -98,10 +105,10 @@ df <- df %>%
 # Aggregate by weeks:
 co2_present <- df %>%
   index_by(week = ~ yearweek(.)) %>%
-  summarise( ppm = mean(ppm) )
+  summarise(ppm = mean(ppm))
 
 # Fill missing values with the average of the nearest existing ones
-co2_present <- co2_present  %>% 
+co2_present <- co2_present %>%
   fill_gaps(.full = TRUE) %>%
   fill(ppm, .direction = "downup") %>%
   fill(ppm, .direction = "updown")
@@ -142,16 +149,20 @@ co2_present <- mutate(co2_present, deseasoned = difference(ppm, lag = my_lag))
 co2_present <- mutate(co2_present, detrended = difference(deseasoned, lag = 1))
 co2_diff <- slice(co2_present, my_lag + 2:nrow(co2_present))
 
-diff_ts <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
+diff_ts <- co2_diff %>%
+  filter(week > yearweek("1998-01-01")) %>%
   ggplot() +
   aes(x = week, y = detrended) +
-  geom_line() + labs(x = "", y = "Detrended TS")
+  geom_line() +
+  labs(x = "", y = "Detrended TS")
 
-acf_plot <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
+acf_plot <- co2_diff %>%
+  filter(week > yearweek("1998-01-01")) %>%
   ACF(detrended, type = "correlation") %>%
   autoplot() + labs(x = "lag", y = "ACF")
 
-pacf_plot <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
+pacf_plot <- co2_diff %>%
+  filter(week > yearweek("1998-01-01")) %>%
   ACF(detrended, type = "partial") %>%
   autoplot() + labs(x = "lag", y = "PACF")
 
@@ -203,13 +214,51 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 \textcolor{red}{Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.}
 
 ```{r Split into test and train, echo = TRUE}
-co2_train <- co2_diff %>% filter((week > yearweek("1998-01-01")) & 
-                                   (week < yearweek("2021-06-01"))
-                                   )
+co2_train <- co2_diff %>% filter((week > yearweek("1998-01-01")) &
+  (week < yearweek("2021-06-01")))
 
 co2_test <- co2_diff %>% filter(week >= yearweek("2021-06-01"))
 ```
 
+```{r Explore model space}
+# Generate a set of models AR(1)-AR(10) and MA(1)-MA(10)
+# with first and second degree of differencing.
+# Select the model with the lowest BIC
+
+model.bic <- co2_train %>%
+  model(ARIMA(deseasoned ~ 1 + pdq(1:10, 1:2, 1:10) + PDQ(0, 0, 0),
+    ic = "bic",
+    stepwise = F, greedy = F
+  ))
+
+# Report the winning model parameters
+# model.bic %>% report()
+```
+
+```{r Make final model}
+final_arima <- arima(co2_train$ppm,
+  order = c(1, 1, 2),
+  seasonal = list(order = c(0, 1, 1), period = 52)
+)
+final_arima
+```
+
+```{r Test residuals}
+# Visualize ACF plot of its residuals
+resid_acf_plot <- final_arima %>%
+  residuals() %>%
+  acf(plot = FALSE) %>%
+  autoplot() + coord_cartesian(xlim = c(1, 20))
+ggsave(filename = "./figures/plot_2_5.pdf", plot = resid_acf_plot, device = "pdf", units = c("in"), height = 4, width = 10)
+```
+
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot_2_5.pdf}
+  \caption{ACF plot for SARIMA(1.1.1)(0.1.1)[52] residuals \label{fig:resid_acf}}
+  \begin{figurenotes}
+    Residuals appear to be white noise
+  \end{figurenotes}
+\end{figure} 
 
 ## Forecasts: How bad could it get?
 
