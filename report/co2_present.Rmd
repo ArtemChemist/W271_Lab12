@@ -264,6 +264,25 @@ ggsave(filename = "./figures/plot_2_5.pdf", plot = resid_acf_plot, device = "pdf
 
 \textcolor{red}{With the non-seasonally adjusted data series, generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2122. How confident are you that these will be accurate predictions?}
 
+```{r Forecast, results='hide'}
+forecast_plot <- final_arima %>%
+                  forecast(h=400) %>%
+                  autoplot() +
+                    ylab("C02") + 
+                  scale_x_yearweek(date_breaks = "1 year", date_labels = "%Y")
+
+ggsave(filename = "./figures/plot_2_6.pdf", plot = forecast_plot, device = "pdf", units = c("in"), height = 4, width = 10)
+```
+
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot_2_6.pdf}
+  \caption{Forecast for future CO2 concentration \label{fig:resid_acf}}
+  \begin{figurenotes}
+    Residuals appear to be white noise
+  \end{figurenotes}
+\end{figure}
+
+
 \textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in is quite simple, and as you might notice, does not in fact match up with the model that we have fitted.}
 
 # Conclusions 
