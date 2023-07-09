@@ -47,6 +47,21 @@ options(digits = 3)
 library(tidyverse)
 library(tsibble)
 library(latex2exp)
+library(dplyr)
+library(magrittr)
+library(patchwork)
+library(lubridate)
+library(feasts)
+library(forecast)
+library(sandwich)
+if (!"fable" %in% rownames(installed.packages())) {
+  install.packages("fable")
+}
+library(fable)
+if (!"car" %in% rownames(installed.packages())) {
+  install.packages("car")
+}
+library(car)
 theme_set(theme_minimal())
 ```
 
@@ -67,8 +82,12 @@ theme_set(theme_minimal())
 # Atmospheric $CO_{2}$ Measurement and Data 
 \textcolor{red}{Discuss the methods and locations for measurments of CO2.}
 
+```{r load the data}
+co2_ts <- tsibble::as_tsibble(co2)
+```
+
 ```{r plot the keeling curve, echo = FALSE}
-fig_1 <- tsibble::as_tsibble(co2) %>%
+fig_1 <- co2_ts %>%
   ggplot() + 
   aes(x=index, y=value) + 
   geom_line(color = 'steelblue') +
@@ -118,21 +137,27 @@ ggsave(filename = './figures/plot_1_1.pdf', plot = fig_1, device = "pdf", units 
 
 \textcolor{red}{ writing out a model allows you to reference what models your forecasts are being generated from. We will be expecting such a declaration in your reports.}
 
-This is a general form of a linear model, where $CO_{2}$ concentration is modeled asa linear function of time and a random error.
+This is a general form of a linear model, where $CO_{2}$ concentration is modeled as a linear function of time and a random error.
 
 We estimate best fitting parameters on this model in the following way, 
-```{r make fake data}
-## We wouldn't show this in a report.
-d <- data.frame(
-  y=1:10 + rnorm(n=10), 
-  x=2:11
-)
-## But we would show the next chunk. 
-```
 
 ```{r estimate a model, echo=TRUE}
-model_1 <- lm(y ~ x, data = d)
+model_lin <- lm(formula = value ~ index, data = as.data.frame(co2_ts))
 ```
+
+```{r plot linear model}
+as.data.frame(co2_ts) %>%
+ggplot() + aes(x = index, y = value) +
+  geom_point(color = "steelblue") +
+  geom_line(aes(y = fitted(model_lin)), color = "red", size = 2) +
+  labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20),
+        )
+```
+
 
 ## ARIMA Models 
 
@@ -142,8 +167,8 @@ model_1 <- lm(y ~ x, data = d)
 
 ```{r}
 prediction_1 <- predict(
-  object = model_1, 
-  newdata = data.frame(x=11), 
+  object = model_lin, 
+  newdata = data.frame(value=11), 
   interval = 'prediction'
 )
 ```
