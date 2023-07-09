@@ -75,7 +75,11 @@ fig_1 <- tsibble::as_tsibble(co2) %>%
   labs(
     x = 'Month and Year',
     y = TeX(r'($CO_2$ parts per million)')
-  )
+  ) + theme(axis.text.x=element_text(size=20), 
+            axis.text.y=element_text(size=20), 
+           axis.title.x=element_text(size=20),
+           axis.title.y=element_text(size=20),
+            )
 
 ggsave(filename = './figures/plot_1_1.pdf', plot = fig_1, device = "pdf", units = c("in"), height=5, width=10)
 ```
