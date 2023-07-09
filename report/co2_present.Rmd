@@ -60,9 +60,7 @@ theme_set(theme_minimal())
 
 # Introduction
 
-\textcolor{red}{In this introduction, you can assume that your reader will have just read your 1997 report. In this introduc-
-tion, very briefly pose the question that you are evaluating, and describe what (if anything) has changed in
-the data generating process between 1997 and the present.} 
+\textcolor{red}{In this introduction, you can assume that your reader will have just read your 1997 report.} 
 
 # Mona Loa $CO_{2}$ Data 
 We first download data Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
@@ -72,6 +70,7 @@ url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv" # URL
 file_path <- "./data/raw_daily_data.csv" # Destination file
 download.file(url, file_path, mode = "w")
 ```
+
 ```{r convert csv to tsibble}
 # read csv into a dataframe
 df <- read.table(file_path,
@@ -114,7 +113,7 @@ co2_present <- co2_present  %>%
 
 Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
 
-```{r plot the keeling curve, echo = FALSE}
+```{r plot the keeling curve}
 fig_2_1 <- co2_present %>%
   ggplot() +
   aes(x = week, y = ppm) +
@@ -129,7 +128,7 @@ fig_2_1 <- co2_present %>%
 ggsave(filename = "./figures/plot_2_1.pdf", plot = fig_2_1, device = "pdf", units = c("in"), height = 5, width = 10)
 ```
 
-\begin{figure}
+\begin{figure}[ht]
   \includegraphics[width=.8\linewidth]{./figures/plot_2_1.pdf}
   \caption{Recent trend in $CO_2$ concentration\label{fig:carbon}}
   \begin{figurenotes}
@@ -162,11 +161,12 @@ ggsave(filename = "./figures/plot_2_3.pdf", plot = acf_plot, device = "pdf", uni
 
 ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", units = c("in"), height = 4, width = 5)
 ```
-\begin{figure}
+
+\begin{figure}[ht]
   \includegraphics[width=.8\linewidth]{./figures/plot_2_2.pdf}
   \caption{De-seasoned/-trended series for $CO_2$ concentration\label{fig:notrend_ts}}
 \end{figure} 
-\begin{figure}
+\begin{figure}[h]
   \centering
   \begin{subfigure}[b]{0.45\textwidth}
     \includegraphics[width=\textwidth]{./figures/plot_2_3.pdf}
@@ -188,26 +188,6 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 
 \textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) }
 
-\begin{equation}
-\label{eq:one}
-\text{CO}_{2} = \phi_{0} + \phi_{1} + \epsilon_{eit}
-\end{equation} 
-
-
-We estimate best fitting parameters on this model in the following way, 
-```{r make fake data}
-## We wouldn't show this in a report.
-d <- data.frame(
-  y = 1:10 + rnorm(n = 10),
-  x = 2:11
-)
-## But we would show the next chunk.
-```
-
-```{r estimate a model, echo=TRUE}
-model_1 <- lm(y ~ x, data = d)
-```
-
 ## ARIMA Models 
 
 \textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present.}
@@ -222,20 +202,20 @@ model_1 <- lm(y ~ x, data = d)
 
 \textcolor{red}{Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.}
 
+```{r Split into test and train, echo = TRUE}
+co2_train <- co2_diff %>% filter((week > yearweek("1998-01-01")) & 
+                                   (week < yearweek("2021-06-01"))
+                                   )
+
+co2_test <- co2_diff %>% filter(week >= yearweek("2021-06-01"))
+```
+
+
 ## Forecasts: How bad could it get?
 
 \textcolor{red}{With the non-seasonally adjusted data series, generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2122. How confident are you that these will be accurate predictions?}
 
-```{r}
-prediction_1 <- predict(
-  object = model_1,
-  newdata = data.frame(x = 11),
-  interval = "prediction"
-)
-```
-
-
-\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in \autoref{eq:one} is quite simple, and as you might notice, does not in fact match up with the model that we have fitted. However, from this model is is possible to reason about what the outcomes would be if the *input concept* were to be slightly ouside of the observed data range. In particular, if *input concept* were as high as $11$, then we would expect the *output concept* to be `r prediction_1[1,1]`, with a prediction interval that ranges from [`r prediction_1[1,2]`, `r prediction_1[1,3]`]}}
+\textcolor{red}{Because we have fitted a model, we can make predictions from that model. Our preferred model, named in is quite simple, and as you might notice, does not in fact match up with the model that we have fitted.}
 
 # Conclusions 
 
