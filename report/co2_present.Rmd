@@ -54,8 +54,7 @@ library(lubridate)
 library(feasts)
 library(forecast)
 library(sandwich)
-if(!"fable"%in%rownames(installed.packages())) {install.packages("fable")}
-library(fable)
+
 theme_set(theme_minimal())
 ```
 
@@ -195,6 +194,20 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 \end{equation} 
 
 
+We estimate best fitting parameters on this model in the following way, 
+```{r make fake data}
+## We wouldn't show this in a report.
+d <- data.frame(
+  y = 1:10 + rnorm(n = 10),
+  x = 2:11
+)
+## But we would show the next chunk.
+```
+
+```{r estimate a model, echo=TRUE}
+model_1 <- lm(y ~ x, data = d)
+```
+
 ## ARIMA Models 
 
 \textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present.}
@@ -208,15 +221,6 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 ## Best models on present data
 
 \textcolor{red}{Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.}
-
-
-```{r Split into test snad train}
-co2_train <- co2_diff %>% filter((week > yearweek("1998-01-01")) & 
-                                   (week < yearweek("2021-06-01"))
-                                   )
-
-co2_test <- co2_diff %>% filter(week >= yearweek("2021-06-01"))
-```
 
 ## Forecasts: How bad could it get?
 
