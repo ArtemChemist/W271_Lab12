@@ -194,10 +194,37 @@ hist_arima
 ```
 ## Forecasts 
 
-```{r test}
-frcst_length <- 36
-prediction_1 <- forecast(hist_arima, h=frcst_length)
+```{r forecast to 2022}
+frcst_length <- 300
+frcst_2022 <- forecast(hist_arima, h=frcst_length)
 ```
+
+
+```{r forecast plotting, results='hide'}
+futuredate <- seq(ISOdate(1998,01,01), by = "month", length.out = frcst_length)
+
+df_toPlot <- cbind.data.frame(futuredate, frcst_2022$mean, frcst_2022$lower, frcst_2022$upper)
+df_toPlot$week <- yearweek(df_toPlot$futuredate)
+
+df_toPlot <- df_toPlot[c(2,4,6,7)]
+names(df_toPlot) <- c("mean", "lower", "upper", "date")
+
+forecast_plot <- df_toPlot %>% ggplot() + 
+  aes(x = date, y = mean) +
+  geom_line(color = "red") + 
+  geom_ribbon(aes(ymin=lower,ymax=upper), fill="yellow", alpha=0.35)
+
+ggsave(filename = "./figures/plot1_frcst2022.pdf", plot = forecast_plot, device = "pdf", units = c("in"), height = 4, width = 10)
+```
+
+
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot1_frcst2022.pdf}
+  \caption{Forecast for future CO2 concentration \label{fig:frcst2y}}
+  \begin{figurenotes}
+    Residuals appear to be white noise
+  \end{figurenotes}
+\end{figure}
 
 \textcolor{red}{Generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?}
 
