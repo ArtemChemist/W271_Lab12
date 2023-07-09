@@ -32,6 +32,7 @@ abstract: |
 header-includes: 
   - '\usepackage{graphicx}'
   - '\usepackage{booktabs}'
+  - '\usepackage{subcaption}'
 output: rticles::aea_article
 ---
 
@@ -132,33 +133,52 @@ ggsave(filename = "./figures/plot_2_1.pdf", plot = fig_2_1, device = "pdf", unit
   \includegraphics[width=.8\linewidth]{./figures/plot_2_1.pdf}
   \caption{Recent trend in $CO_2$ concentration\label{fig:carbon}}
   \begin{figurenotes}
-    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with strong seasonal oscillations. This trends points to the need of de-seasoning before further analysis.
+    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with strong seasonal oscillations. These patterns points to the need of de-seasoning and de-trending before further analysis.
   \end{figurenotes}
 \end{figure} 
 
-
-```{r}
+```{r EDA plots with de-trending}
 my_lag <- 52
-co2_present <- mutate(co2_present, diff = difference(ppm, lag = my_lag))
-co2_diff <- slice(co2_present, my_lag + 1:nrow(co2_present))
-```
+co2_present <- mutate(co2_present, deseasoned = difference(ppm, lag = my_lag))
+co2_present <- mutate(co2_present, detrended = difference(deseasoned, lag = 1))
+co2_diff <- slice(co2_present, my_lag + 2:nrow(co2_present))
 
-```{r}
-diff_ts <- co2_diff %>%
+diff_ts <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
   ggplot() +
-  aes(x = week, y = ppm) +
-  geom_line()
+  aes(x = week, y = detrended) +
+  geom_line() + labs(x = "", y = "Detrended TS")
 
-acf_plot <- co2_diff %>%
-  ACF(ppm, type = "correlation") %>%
+acf_plot <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
+  ACF(detrended, type = "correlation") %>%
   autoplot() + labs(x = "lag", y = "ACF")
 
-pacf_plot <- co2_diff %>%
-  ACF(ppm, type = "partial") %>%
+pacf_plot <- co2_diff %>% filter(week > yearweek("1998-01-01")) %>%
+  ACF(detrended, type = "partial") %>%
   autoplot() + labs(x = "lag", y = "PACF")
 
-grid.arrange(diff_ts, acf_plot, pacf_plot, nrow = 1)
+ggsave(filename = "./figures/plot_2_2.pdf", plot = diff_ts, device = "pdf", units = c("in"), height = 4, width = 10)
+
+ggsave(filename = "./figures/plot_2_3.pdf", plot = acf_plot, device = "pdf", units = c("in"), height = 4, width = 5)
+
+ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", units = c("in"), height = 4, width = 5)
 ```
+\begin{figure}
+  \includegraphics[width=.8\linewidth]{./figures/plot_2_2.pdf}
+  \caption{De-seasoned/-trended series for $CO_2$ concentration\label{fig:notrend_ts}}
+\end{figure} 
+\begin{figure}
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot_2_3.pdf}
+    \caption{Recent trend in $CO_2$ concentration\label{fig:notrend_acf}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot_2_4.pdf}
+    \caption{Recent trend in $CO_2$ concentration\label{fig:notrend_pacf}}
+  \end{subfigure}
+  \caption{Diagnostic plots for de-trended series\label{fig:notrend_plots}}
+\end{figure}
 
 
 # Models and Forecasts 
