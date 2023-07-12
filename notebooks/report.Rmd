@@ -10,6 +10,10 @@ library(tidyverse)
 library(tsibble)
 library(latex2exp)
 
+# Already presented in the course thus far
+library(feasts)
+library(forecast)
+
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
 ```
@@ -39,8 +43,66 @@ tsibble::as_tsibble(co2) %>%
 
 ## CO2 Data
 
+### Mauna Loa Site
+
 As stated above, the data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. While there are other laboratories that collect $CO_2$ measurements, the Mauna Loa site has been collected $CO_2$ longer than any other site in the world which will give us the most data to work with as we conduct this analysis. The Mauna Loa site is also unique in that it is representative of air for the entire Northern Hemisphere due to its altitude and is not usually affected by nearby vegetation as the site is surrounded be lava flows.
 
 The Mauna Loa data is frequently used because of the amount *and* quality of the data collected. Specifically, this dataset contains accurate and robust measurements of the number of $CO_2$ molecules per million in a cubic meter of *dry* air. The term **concentration** may be used for familiarity but it should be stated that this is not the preferred term as the concentration of $CO_2$ may be affected be a number of factors unrelated to how much $CO_2$ is actually in the world's atmosphere at a given moment.
 
 This site measures the concentration of $CO_2$ by funnelling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, a higher density of $CO_2$ molecules will absorb more radiation. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
+
+### Data Introduction
+
+TODO: Fill this out with the data EDA
+
+## Polynomial Time Trend Models
+
+```{r data preparation for modeling}
+co2_ts <- as_tsibble(co2)
+data.1997 <- data.frame(index = 1:nrow(co2_ts), month = factor(month(co2_ts$index)), value = co2_ts$value)
+```
+
+```{r linear model}
+model.linear <- lm(value ~ index, data = data.1997)
+checkresiduals(model.linear)
+```
+
+> While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
+
+```{r quadratic model}
+model.quadratic <- lm(value ~ I(index^2), data = data.1997)
+checkresiduals(model.quadratic)
+```
+
+> A quadratic model does not seem to fare much better than a linear model. In addition to not fully capturing the trend and the seasonality as the linear model did, the quadratic model's residuals also appear less normally distributed.
+
+> There is not much evidence to support that a logarithmic transformation is necessary. This is supported by the fact that the seasonality factor is not multiplicative and by the fact that the overall trend does not appear to be exponential.
+
+```{r polynomial model}
+model.polynomial <- lm(value ~ I(index^2) + index + month, data = data.1997)
+summary(model.polynomial)
+checkresiduals(model.polynomial)
+```
+
+> While the use of monthly dummy variables does not entirely capture the seasonality aspect of the data it is a marked improvement over the linear and quadratic models. And while the residuals do not appear to be a white noise process they do appear much more detrended than the other two models with a fairly normal distribution.
+
+```{r forecasting using the polynomial model}
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2020 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month, month = factor(rep(1:12)))
+model.polynomial.forecast <- predict(model.polynomial, data.future, interval = "confidence", level = 0.99)
+model.polynomial.predicted <- cbind(data.future, model.polynomial.forecast)
+
+ggplot() +
+  geom_line(aes(x = index, y = value), color = 'black', data = data.1997) +
+  geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), color = 'steelblue', alpha = 0.1, data = model.polynomial.predicted) +
+  geom_line(aes(x = index, y = fit), color = 'steelblue', data = model.polynomial.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels (with 95% CI) in blue',
+    x = 'Months since Jan 1959',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+> Visually the model appears to do a fairly decent job. While the 95% confidence interval does appear somewhat small for a forecast so far into the future, the predicted values do seem to follow the pattern of the historical data reliably.
