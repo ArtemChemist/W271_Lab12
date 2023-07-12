@@ -12,7 +12,7 @@ In the 1950s, the geochemist Charles David Keeling observed a seasonal pattern i
 In 1958 Keeling began continuous monitoring of atmospheric carbon dioxide concentrations from the Mauna Loa Observatory in Hawaii and soon observed a trend increase carbon dioxide levels in addition to the seasonal cycle. He was able to attribute this trend increase to growth in global rates of fossil fuel combustion. This trend has continued to the present, and is known as the "Keeling Curve."
 
 ```{r load packages, echo = FALSE, message = FALSE}
-library(tidyverse)
+install.packages("tidyverse")
 library(tsibble)
 library(latex2exp)
 
@@ -55,6 +55,9 @@ Introduce the question to your audience. Suppose that they _could_ be interested
 - [Wikipedia](https://en.wikipedia.org/wiki/Keeling_Curve)
 - [First Publication](./background/keeling_tellus_1960.pdf)
 - [Autobiography of Keeling](./background/keeling_annual_review.pdf)
+
+The question we are addressing is the investigation of trends in global carbon dioxide (CO2) concentrations. The CO2 concentration data comes from the Mauna Loa Observatory, which has been collecting these measurements since 1958. This data has been instrumental in the study of climate change due to the greenhouse effect. Our study seeks to quantify these trends, both in terms of levels and growth rates, and to forecast future CO2 concentrations based on these trends. By the completion of our analysis, we aim to provide a comprehensive understanding of the CO2 data and its characteristics, fit suitable statistical models to this data, and make informed predictions about future atmospheric CO2 levels.
+
 
 ## (3 points) Task 1a: CO2 data
 Conduct a comprehensive Exploratory Data Analysis on the `co2` series. This should include (without being limited to) a [description of how, where and why ](https://gml.noaa.gov/ccgg/about/co2_measurements.html) the data is generated, a thorough investigation of the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed (consider expressing longer-run growth rates as annualized averages).
