@@ -13,6 +13,8 @@ library(latex2exp)
 # Already presented in the course thus far
 library(feasts)
 library(forecast)
+library(tseries)
+library(lubridate)
 
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
@@ -67,16 +69,16 @@ model.linear <- lm(value ~ index, data = data.1997)
 checkresiduals(model.linear)
 ```
 
-> While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
+While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
 
 ```{r quadratic model}
 model.quadratic <- lm(value ~ I(index^2), data = data.1997)
 checkresiduals(model.quadratic)
 ```
 
-> A quadratic model does not seem to fare much better than a linear model. In addition to not fully capturing the trend and the seasonality as the linear model did, the quadratic model's residuals also appear less normally distributed.
+A quadratic model does not seem to fare much better than a linear model. In addition to not fully capturing the trend and the seasonality as the linear model did, the quadratic model's residuals also appear less normally distributed.
 
-> There is not much evidence to support that a logarithmic transformation is necessary. This is supported by the fact that the seasonality factor is not multiplicative and by the fact that the overall trend does not appear to be exponential.
+There is not much evidence to support that a logarithmic transformation is necessary. This is supported by the fact that the seasonality factor is not multiplicative and by the fact that the overall trend does not appear to be exponential.
 
 ```{r polynomial model}
 model.polynomial <- lm(value ~ I(index^2) + index + month, data = data.1997)
@@ -84,7 +86,7 @@ summary(model.polynomial)
 checkresiduals(model.polynomial)
 ```
 
-> While the use of monthly dummy variables does not entirely capture the seasonality aspect of the data it is a marked improvement over the linear and quadratic models. And while the residuals do not appear to be a white noise process they do appear much more detrended than the other two models with a fairly normal distribution.
+While the use of monthly dummy variables does not entirely capture the seasonality aspect of the data it is a marked improvement over the linear and quadratic models. And while the residuals do not appear to be a white noise process they do appear much more detrended than the other two models with a fairly normal distribution.
 
 ```{r forecasting using the polynomial model}
 data.1997.max_month <- max(data.1997$index)
@@ -95,8 +97,8 @@ model.polynomial.predicted <- cbind(data.future, model.polynomial.forecast)
 
 ggplot() +
   geom_line(aes(x = index, y = value), color = 'black', data = data.1997) +
-  geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), color = 'steelblue', alpha = 0.1, data = model.polynomial.predicted) +
-  geom_line(aes(x = index, y = fit), color = 'steelblue', data = model.polynomial.predicted) +
+  geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), color = 'blue', alpha = 0.1, data = model.polynomial.predicted) +
+  geom_line(aes(x = index, y = fit), color = 'blue', data = model.polynomial.predicted) +
   labs(
     title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
     subtitle = 'Forecasted levels (with 95% CI) in blue',
@@ -105,4 +107,34 @@ ggplot() +
   )
 ```
 
-> Visually the model appears to do a fairly decent job. While the 95% confidence interval does appear somewhat small for a forecast so far into the future, the predicted values do seem to follow the pattern of the historical data reliably.
+Visually the model appears to do a fairly decent job. While the 95% confidence interval does appear somewhat small for a forecast so far into the future, the predicted values do seem to follow the pattern of the historical data reliably.
+
+## ARIMA Model
+
+```{r Create ARIMA model, warning = FALSE}
+# Perform the Phillips Perron test
+pp.test(co2, alternative = "stationary")
+
+model.arima <- co2 %>% auto.arima(ic="aicc", seasonal = FALSE)
+model.arima
+
+checkresiduals(model.arima)
+```
+
+The model chosen was the model with the lowest AICc found by the Hyndman-Khandakar algorithm. The AICc score was chosen because it is generally accepted by the community to be a strong indicator of quality models. As the Hyndman-Khandakar algorithm iterates over many models, we can be confident that the model chosen is the best given the limitations.
+
+This non-seasonal ARIMA model does an extremely good job of capturing the stochasticity of the time series, but obviously, does not capture the seasonality as intended. The residuals appear to be a white noise process with a *mostly* gaussian distribution. The ACF plot clearly shows the results of not capturing the seasonality. Interestingly, the Phillips-Peron test indicates that the data are already are stationary; however, the evidence shows one level of differencing leads to a better model.
+
+```{r forecasting using the ARIMA model}
+model.arima.predicted <- forecast(model.arima, h = 12 * 25, level = c(95))
+model.arima.predicted %>%
+  autoplot() +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels (with 95% CI) in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+The most obvious aspect of the ARIMA predictions is the flattening of the predictions after a few years. This is to be expected with long forecasts using ARIMA models and could be mitigated using seasonal parameters. Because of this limitation, it would appear that the polynomial model had stronger forecasting. It is also noteworthy that, because of the quadratic parameter in the polynomial model, the polynomial forecasts also predict a much faster rise in $CO_2$ levels than the ARIMA forecasts with expect the increase in $CO_2$ levels to remain steady.
