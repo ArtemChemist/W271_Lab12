@@ -15,6 +15,9 @@ In 1958 Keeling began continuous monitoring of atmospheric carbon dioxide concen
 install.packages("tidyverse")
 library(tsibble)
 library(latex2exp)
+library(forecast)
+library(dplyr)
+
 
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
@@ -79,6 +82,45 @@ pacf(co2)
 ## (3 points) Task 2a: Linear time trend model
 
 Fit a linear time trend model to the `co2` series, and examine the characteristics of the residuals. Compare this to a quadratic time trend model. Discuss whether a logarithmic transformation of the data would be appropriate. Fit a polynomial time trend model that incorporates seasonal dummy variables, and use this model to generate forecasts to the year 2020. 
+
+```{r}
+linear_model <- lm(co2 ~ time(co2))
+summary(linear_model)
+plot(residuals(linear_model))
+```
+
+```{r}
+quadratic_model <- lm(co2 ~ time(co2) + I(time(co2)^2))
+summary(quadratic_model)
+plot(residuals(quadratic_model))
+```
+```{r}
+# Time variable
+co2_df <- data.frame(co2 = as.numeric(co2), time = as.numeric(time(co2)))
+
+# Seasonal dummy variables
+co2_df$month <- cycle(co2)
+```
+
+
+```{r}
+seasonal_model <- lm(co2 ~ time + I(time^2) + factor(month), data = co2_df)
+```
+
+
+```{r}
+future_time <- seq(max(time(co2)), 2020, by = 1/12)
+future_month <- cycle(ts(future_time, start = 1959, freq = 12))
+future_df <- data.frame(time = future_time, month = future_month)
+pred <- predict(seasonal_model, newdata = future_df)
+```
+
+
+```{r}
+# Plot the data and forecasts
+plot(co2, main = "CO2 Concentration with Forecasts to 2020")
+lines(future_time, pred, col = "blue")
+```
 
 ## (3 points) Task 3a: ARIMA times series model 
 
