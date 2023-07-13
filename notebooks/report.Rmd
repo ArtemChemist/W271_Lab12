@@ -1,0 +1,257 @@
+---
+title: 'Statistical Methods for Discrete Response, Time Series, and Panel Data (W271): Lab 2'
+geometry: margin=1in
+output:
+  github_document: default
+---
+
+```{r load packages, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(tsibble)
+library(latex2exp)
+
+# Already presented in the course thus far
+library(feasts)
+library(forecast)
+library(tseries)
+library(lubridate)
+
+theme_set(theme_minimal())
+knitr::opts_chunk$set(dpi=1000)
+```
+
+# C02 Emissions
+
+## Part 1
+
+### Introduction
+
+$CO_2$ levels have been recorded at the Mauna Loa observatory for over 40 years. At this time the data seem to show an alarming trend of increasing $CO_2$ levels year over year. This is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase with it. While the exact effects of the change this will have on the Earth's environment remain to be seen, expected changes include but are not limited to the following:
+- Heat waves
+- Drought
+- Rising sea levels
+With the data at hand, it is imperative that we discover whether we have enough evidence to show that this recent rise in $CO_2$ levels is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.
+
+```{r plot the keeling curve, echo = FALSE}
+tsibble::as_tsibble(co2) %>%
+  ggplot() + 
+  aes(x=index, y=value) + 
+  geom_line(color = 'steelblue') +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$)'),
+    subtitle = 'The "Keeling Curve"',
+    x = 'Month and Year',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+### CO2 Data
+
+#### Mauna Loa Site
+
+As stated above, the data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. While there are other laboratories that collect $CO_2$ measurements, the Mauna Loa site has been collected $CO_2$ longer than any other site in the world which will give us the most data to work with as we conduct this analysis. The Mauna Loa site is also unique in that it is representative of air for the entire Northern Hemisphere due to its altitude and is not usually affected by nearby vegetation as the site is surrounded be lava flows.
+
+The Mauna Loa data is frequently used because of the amount *and* quality of the data collected. Specifically, this dataset contains accurate and robust measurements of the number of $CO_2$ molecules per million in a cubic meter of *dry* air. The term **concentration** may be used for familiarity but it should be stated that this is not the preferred term as the concentration of $CO_2$ may be affected be a number of factors unrelated to how much $CO_2$ is actually in the world's atmosphere at a given moment.
+
+This site measures the concentration of $CO_2$ by funnelling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, a higher density of $CO_2$ molecules will absorb more radiation. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
+
+#### Data Introduction
+
+TODO: Fill this out with the data EDA
+
+### Polynomial Time Trend Models
+
+```{r data preparation for modeling}
+co2_ts <- as_tsibble(co2)
+data.1997 <- data.frame(index = 1:nrow(co2_ts), month = factor(month(co2_ts$index)), value = co2_ts$value)
+```
+
+```{r linear model}
+model.linear <- lm(value ~ index, data = data.1997)
+checkresiduals(model.linear)
+```
+
+While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
+
+```{r quadratic model}
+model.quadratic <- lm(value ~ I(index^2), data = data.1997)
+checkresiduals(model.quadratic)
+```
+
+A quadratic model does not seem to fare much better than a linear model. In addition to not fully capturing the trend and the seasonality as the linear model did, the quadratic model's residuals also appear less normally distributed.
+
+There is not much evidence to support that a logarithmic transformation is necessary. This is supported by the fact that the seasonality factor is not multiplicative and by the fact that the overall trend does not appear to be exponential.
+
+```{r polynomial model}
+model.polynomial <- lm(value ~ I(index^2) + index + month, data = data.1997)
+summary(model.polynomial)
+checkresiduals(model.polynomial)
+```
+
+While the use of monthly dummy variables does not entirely capture the seasonality aspect of the data it is a marked improvement over the linear and quadratic models. And while the residuals do not appear to be a white noise process they do appear much more detrended than the other two models with a fairly normal distribution.
+
+```{r forecasting using the polynomial model}
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2020 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month, month = factor(rep(1:12)))
+model.polynomial.forecast <- predict(model.polynomial, data.future, interval = "confidence", level = 0.95)
+model.polynomial.predicted <- cbind(data.future, model.polynomial.forecast)
+
+ggplot() +
+  geom_line(aes(x = index, y = value), color = 'black', data = data.1997) +
+  geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), color = 'blue', alpha = 0.1, data = model.polynomial.predicted) +
+  geom_line(aes(x = index, y = fit), color = 'blue', data = model.polynomial.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels (with 95% CI) in blue',
+    x = 'Months since Jan 1959',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+Visually the model appears to do a fairly decent job. While the 95% confidence interval does appear somewhat small for a forecast so far into the future, the predicted values do seem to follow the pattern of the historical data reliably.
+
+### ARIMA Model
+
+```{r Create ARIMA model, warning = FALSE}
+# Perform the Phillips Perron test
+pp.test(co2, alternative = "stationary")
+
+model.arima <- co2 %>% auto.arima(ic="aicc", seasonal = FALSE)
+model.arima
+
+checkresiduals(model.arima)
+```
+
+The model chosen was the model with the lowest AICc found by the Hyndman-Khandakar algorithm. The AICc score was chosen because it is generally accepted by the community to be a strong indicator of quality models. As the Hyndman-Khandakar algorithm iterates over many models, we can be confident that the model chosen is the best given the limitations.
+
+This non-seasonal ARIMA model does an extremely good job of capturing the stochasticity of the time series, but obviously, does not capture the seasonality as intended. The residuals appear to be a white noise process with a *mostly* gaussian distribution. The ACF plot clearly shows the results of not capturing the seasonality. Interestingly, the Phillips-Peron test indicates that the data are already are stationary; however, the evidence shows one level of differencing leads to a better model.
+
+```{r forecasting using the ARIMA model}
+model.arima.predicted <- forecast(model.arima, h = 12 * 25, level = c(95))
+model.arima.predicted %>%
+  autoplot() +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels (with 95% CI) in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+The most obvious aspect of the ARIMA predictions is the flattening of the predictions after a few years. This is to be expected with long forecasts using ARIMA models and could be mitigated using seasonal parameters. Because of this limitation, it would appear that the polynomial model had stronger forecasting. It is also noteworthy that, because of the quadratic parameter in the polynomial model, the polynomial forecasts also predict a much faster rise in $CO_2$ levels than the ARIMA forecasts with expect the increase in $CO_2$ levels to remain steady.
+
+### Forecasting CO2 Growth
+
+```{r forecast rising CO2 levels}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
+forecast.1997 <- forecast(model.arima, h = 12 * 117, level = c(95))
+dates <- rownames(data.frame(forecast.1997))
+
+# When CO2 is expected to hit 420ppm
+prediction.420.lower <- first.date(forecast.1997$lower, 420)
+prediction.420.expected <- first.date(forecast.1997$mean, 420)
+prediction.420.upper <- first.date(forecast.1997$upper, 420)
+
+# When CO2 is expected to hit 500ppm
+prediction.500.lower <- first.date(forecast.1997$lower, 500)
+prediction.500.expected <- first.date(forecast.1997$mean, 500)
+prediction.500.upper <- first.date(forecast.1997$upper, 500)
+
+# Expected CO2 levels in the year 2100
+prediction.2100.index <- match("Jan 2100", dates)
+prediction.2100.lower <- forecast.1997$lower[prediction.2100.index]
+prediction.2100.expected <- forecast.1997$mean[prediction.2100.index]
+prediction.2100.upper <- forecast.1997$upper[prediction.2100.index]
+```
+
+#### When CO2 is expected to hit 420ppm and 500ppm
+
+| PPM    | Best Case Scenario       | Expected                    | Worst Case Scenario      |
+|--------|--------------------------|-----------------------------|--------------------------|
+| 420    | `r prediction.420.lower` | `r prediction.420.expected` | `r prediction.420.upper` |
+| 500    | `r prediction.500.lower` | `r prediction.500.expected` | `r prediction.500.upper` |
+
+#### Expected CO2 levels in the year 2100
+
+| Best Case Scenario                  | Expected                               | Worst Case Scenario                 |
+|-------------------------------------|----------------------------------------|-------------------------------------|
+| `r round(prediction.2100.lower, 2)` | `r round(prediction.2100.expected, 2)` | `r round(prediction.2100.upper, 2)` |
+
+#### Discussion
+
+These predictions are based upon the ARIMA model because the confidence band appeared more realistic than the confidence interval created by the polynomial model. The ARIMA model not using seasonal parameter would affect the results but because of the small magnitude of the seasonal variation it would likely not affect results by very much. Rising $CO_2$ levels would be primarily due to the trend and not the seasonality of the time series which would be capturing relatively similarly in both an ARIMA and SARIMA model by the drift parameter.
+
+Note: The best and worst case scenarios are based upon the 95% confidence interval.
+
+## Part 2
+
+### Introduction
+
+In follow-up to our 1997 report we wish to continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects.
+
+In April of 2019 the Mauna Loa laboratory updated their equipment to measure $CO_2$ with a new technique called Cavity Ring-Down Spectroscopy (CRDS) in contrast to the prior infrared absorption technique. As such, all data from April 2019 onwards will contain measurements using the new method. Additionally, due to eruptions at the Mauna Loa site in 2022, data from December 2022 onwards are from a site at the Maunakea laboratory.
+
+### Data Update
+
+```{r pull data from the global monitoring laboratory}
+co2_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+co2_present <- read.csv(co2_url, comment.char = "#") %>%
+  mutate(index = yearmonth(lubridate::make_datetime(year, month))) %>%
+  tsibble(index = index)
+```
+
+### Model Comparisons
+
+#### Polynomial
+
+```{r compare polynomial model forecast}
+# Generate newdata to predict on
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2023 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month)
+
+# Create forecasts
+model.linear.forecast <- predict(model.linear, data.future, interval = "confidence", level = 0.99)
+model.linear.predicted <- cbind(data.future, model.polynomial.forecast) %>%
+  mutate(value = fit, index = yearmonth(seq(as.Date("1998/1/1"), as.Date("2023/12/1"), by = "month"))) %>%
+  select(value, index) %>%
+  head(-6) # remove the last 6 months
+
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present) +
+  geom_line(aes(x = index, y = value), color = 'steelblue', data = model.linear.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+#### ARIMA
+
+```{r compare ARIMA model forecast}
+model.arima.predicted <- data.frame(forecast(model.arima, h = (12 * 25) + 6, level = c(0)))
+model.arima.predicted <- data.frame(index = yearmonth(rownames(model.arima.predicted)), average = model.arima.predicted$Point.Forecast)
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'steelblue', data = model.arima.predicted) +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+#### Discussion
+
+The ARIMA and linear models differ for around the first 2-3 years at which point the ARIMA model converges to a line resembling that of the linear model. The ARIMA model clearly matches the Keeling curve better than the linear model up until that point; at which point, they perform similarly.
+
+Both models do not capture the growing rate emissions which is a critical part of the trend. The polynomial model fared much better as it did consider that the amount of $CO_2$ being put into the air annually is growing year over year. Because of this, if one were to plot the forecast of the polynomial model they would find that it is much more accurate than the linear or the ARIMA model.
