@@ -190,15 +190,17 @@ dev.off()
 
 While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
 
-```{r quadratic model}
-model.quadratic <- lm(formula = value ~ index + I(index^2), data = co2_df)
+In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$:
+
+```{r quadratic model, echo=TRUE}
+model.quad <- lm(formula = value ~ index + I(index^2), data = co2_df)
 ```
 
 ```{r plot quadratic model}
 quad_plot <- co2_df %>%
 ggplot() + aes(x = index, y = value) +
   geom_point(color = "steelblue") +
-  geom_line(aes(y = fitted(model.quadratic)), color = "red", size = 2) +
+  geom_line(aes(y = fitted(model.quad)), color = "red", size = 2) +
   labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20), 
@@ -211,7 +213,7 @@ ggsave(filename = './figures/plot_quad_model.png', plot = quad_plot, device = "p
 
 ```{r residuals fro quad model, results='hide', echo=FALSE}
 png(file = './figures/plot_quad_mod_resid.png', height=4, width=5, units = c("in"), res = 600)
-checkresiduals(model.quadratic, test=FALSE, plot = TRUE)
+checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
 
@@ -231,6 +233,23 @@ dev.off()
   \caption{Linear model\label{fig:quad_mods}}
 \end{figure}
 A quadratic model fares slightly better than a linear model. It captures inherent non-linearity of the trend ( \autoref{fig:quad_model}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations.
+
+
+There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
+
+```{r decompose, results='hide'}
+co2_decomp <- decompose(co2)
+
+png(file = './figures/plot_decomposition.png', height=4, width=5, units = c("in"), res = 600)
+plot(co2_decomp)
+dev.off()
+```
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
+    \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
+\end{figure}
+
 
 ## ARIMA times series model
 
