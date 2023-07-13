@@ -22,7 +22,9 @@ knitr::opts_chunk$set(dpi=1000)
 
 # C02 Emissions
 
-## Introduction
+## Part 1
+
+### Introduction
 
 $CO_2$ levels have been recorded at the Mauna Loa observatory for over 40 years. At this time the data seem to show an alarming trend of increasing $CO_2$ levels year over year. This is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase with it. While the exact effects of the change this will have on the Earth's environment remain to be seen, expected changes include but are not limited to the following:
 - Heat waves
@@ -43,9 +45,9 @@ tsibble::as_tsibble(co2) %>%
   )
 ```
 
-## CO2 Data
+### CO2 Data
 
-### Mauna Loa Site
+#### Mauna Loa Site
 
 As stated above, the data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. While there are other laboratories that collect $CO_2$ measurements, the Mauna Loa site has been collected $CO_2$ longer than any other site in the world which will give us the most data to work with as we conduct this analysis. The Mauna Loa site is also unique in that it is representative of air for the entire Northern Hemisphere due to its altitude and is not usually affected by nearby vegetation as the site is surrounded be lava flows.
 
@@ -53,11 +55,11 @@ The Mauna Loa data is frequently used because of the amount *and* quality of the
 
 This site measures the concentration of $CO_2$ by funnelling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, a higher density of $CO_2$ molecules will absorb more radiation. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
 
-### Data Introduction
+#### Data Introduction
 
 TODO: Fill this out with the data EDA
 
-## Polynomial Time Trend Models
+### Polynomial Time Trend Models
 
 ```{r data preparation for modeling}
 co2_ts <- as_tsibble(co2)
@@ -109,7 +111,7 @@ ggplot() +
 
 Visually the model appears to do a fairly decent job. While the 95% confidence interval does appear somewhat small for a forecast so far into the future, the predicted values do seem to follow the pattern of the historical data reliably.
 
-## ARIMA Model
+### ARIMA Model
 
 ```{r Create ARIMA model, warning = FALSE}
 # Perform the Phillips Perron test
@@ -139,7 +141,7 @@ model.arima.predicted %>%
 
 The most obvious aspect of the ARIMA predictions is the flattening of the predictions after a few years. This is to be expected with long forecasts using ARIMA models and could be mitigated using seasonal parameters. Because of this limitation, it would appear that the polynomial model had stronger forecasting. It is also noteworthy that, because of the quadratic parameter in the polynomial model, the polynomial forecasts also predict a much faster rise in $CO_2$ levels than the ARIMA forecasts with expect the increase in $CO_2$ levels to remain steady.
 
-## Forecasting CO2 Growth
+### Forecasting CO2 Growth
 
 ```{r forecast rising CO2 levels}
 # Return the date that the given series first hit x num
@@ -166,21 +168,38 @@ prediction.2100.expected <- forecast.1997$mean[prediction.2100.index]
 prediction.2100.upper <- forecast.1997$upper[prediction.2100.index]
 ```
 
-### When CO2 is expected to hit 420ppm and 500ppm
+#### When CO2 is expected to hit 420ppm and 500ppm
 
 | PPM    | Best Case Scenario       | Expected                    | Worst Case Scenario      |
 |--------|--------------------------|-----------------------------|--------------------------|
 | 420    | `r prediction.420.lower` | `r prediction.420.expected` | `r prediction.420.upper` |
 | 500    | `r prediction.500.lower` | `r prediction.500.expected` | `r prediction.500.upper` |
 
-### Expected CO2 levels in the year 2100
+#### Expected CO2 levels in the year 2100
 
 | Best Case Scenario                  | Expected                               | Worst Case Scenario                 |
 |-------------------------------------|----------------------------------------|-------------------------------------|
 | `r round(prediction.2100.lower, 2)` | `r round(prediction.2100.expected, 2)` | `r round(prediction.2100.upper, 2)` |
 
-### Discussion
+#### Discussion
 
 These predictions are based upon the ARIMA model because the confidence band appeared more realistic than the confidence interval created by the polynomial model. The ARIMA model not using seasonal parameter would affect the results but because of the small magnitude of the seasonal variation it would likely not affect results by very much. Rising $CO_2$ levels would be primarily due to the trend and not the seasonality of the time series which would be capturing relatively similarly in both an ARIMA and SARIMA model by the drift parameter.
 
 Note: The best and worst case scenarios are based upon the 95% confidence interval.
+
+## Part 2
+
+### Introduction
+
+In follow-up to our 1997 report we wish to continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects.
+
+In April of 2019 the Mauna Loa laboratory updated their equipment to measure $CO_2$ with a new technique called Cavity Ring-Down Spectroscopy (CRDS) in contrast to the prior infrared absorption technique. As such, all data from April 2019 onwards will contain measurements using the new method. Additionally, due to eruptions at the Mauna Loa site in 2022, data from December 2022 onwards are from a site at the Maunakea laboratory.
+
+### Data Update
+
+```{r pull data from the global monitoring laboratory}
+co2_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+co2_present <- read.csv(co2_url, comment.char = "#") %>%
+  mutate(index = yearmonth(lubridate::make_datetime(year, month))) %>%
+  tsibble(index = index)
+```
