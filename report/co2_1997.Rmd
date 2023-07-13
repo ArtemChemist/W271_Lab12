@@ -301,7 +301,7 @@ data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_mont
 model.wmonth.forecast <- predict.lm(model.wmonth, data.future, interval = "prediction", level = 0.95)
 model.wmonth.predicted <- cbind(data.future, model.wmonth.forecast)
 
-ggplot() +
+pred_plot <- ggplot() +
   geom_line(aes(x = index, y = value), color = 'black', data = co2_df) +
   geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), fill = "yellow", alpha = 0.65, data = model.wmonth.predicted) +
   geom_line(aes(x = index, y = fit), color = 'red', data = model.wmonth.predicted) +
@@ -312,16 +312,18 @@ ggplot() +
     y = TeX(r'($CO_2$ parts per million)')
   )
 
-ggsave(filename = "./figures/plot_wmonth_pred.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot_wmonth_pred.png", plot = pred_plot, device = "png", units = c("in"), height = 4, width = 10)
 ```
 
 \begin{figure}[ht]
   \includegraphics[width=.8\linewidth]{./figures/plot_wmonth_pred.png}
   \caption{Future [CO2], according to quadratic model w monthly variable\label{fig:wmonth_frcst}}
   \begin{figurenotes}
-    Surprisingly narrow predication interval 
+    Unrealistically narrow predication interval 
   \end{figurenotes}
 \end{figure}
+
+\autoref{fig:wmonth_frcst} demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliabl follow the pattern of the historical data.
 
 ## ARIMA times series model
 
