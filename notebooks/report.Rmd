@@ -94,7 +94,7 @@ While the use of monthly dummy variables does not entirely capture the seasonali
 data.1997.max_month <- max(data.1997$index)
 data.future.max_month <- data.1997.max_month + (12 * (2020 - 1997))
 data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month, month = factor(rep(1:12)))
-model.polynomial.forecast <- predict(model.polynomial, data.future, interval = "confidence", level = 0.99)
+model.polynomial.forecast <- predict(model.polynomial, data.future, interval = "confidence", level = 0.95)
 model.polynomial.predicted <- cbind(data.future, model.polynomial.forecast)
 
 ggplot() +
@@ -203,3 +203,55 @@ co2_present <- read.csv(co2_url, comment.char = "#") %>%
   mutate(index = yearmonth(lubridate::make_datetime(year, month))) %>%
   tsibble(index = index)
 ```
+
+### Model Comparisons
+
+#### Polynomial
+
+```{r compare polynomial model forecast}
+# Generate newdata to predict on
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2023 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month)
+
+# Create forecasts
+model.linear.forecast <- predict(model.linear, data.future, interval = "confidence", level = 0.99)
+model.linear.predicted <- cbind(data.future, model.polynomial.forecast) %>%
+  mutate(value = fit, index = yearmonth(seq(as.Date("1998/1/1"), as.Date("2023/12/1"), by = "month"))) %>%
+  select(value, index) %>%
+  head(-6) # remove the last 6 months
+
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present) +
+  geom_line(aes(x = index, y = value), color = 'steelblue', data = model.linear.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+#### ARIMA
+
+```{r compare ARIMA model forecast}
+model.arima.predicted <- data.frame(forecast(model.arima, h = (12 * 25) + 6, level = c(0)))
+model.arima.predicted <- data.frame(index = yearmonth(rownames(model.arima.predicted)), average = model.arima.predicted$Point.Forecast)
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'steelblue', data = model.arima.predicted) +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
+#### Discussion
+
+The ARIMA and linear models differ for around the first 2-3 years at which point the ARIMA model converges to a line resembling that of the linear model. The ARIMA model clearly matches the Keeling curve better than the linear model up until that point; at which point, they perform similarly.
+
+Both models do not capture the growing rate emissions which is a critical part of the trend. The polynomial model fared much better as it did consider that the amount of $CO_2$ being put into the air annually is growing year over year. Because of this, if one were to plot the forecast of the polynomial model they would find that it is much more accurate than the linear or the ARIMA model.
