@@ -138,3 +138,49 @@ model.arima.predicted %>%
 ```
 
 The most obvious aspect of the ARIMA predictions is the flattening of the predictions after a few years. This is to be expected with long forecasts using ARIMA models and could be mitigated using seasonal parameters. Because of this limitation, it would appear that the polynomial model had stronger forecasting. It is also noteworthy that, because of the quadratic parameter in the polynomial model, the polynomial forecasts also predict a much faster rise in $CO_2$ levels than the ARIMA forecasts with expect the increase in $CO_2$ levels to remain steady.
+
+## Forecasting CO2 Growth
+
+```{r forecast rising CO2 levels}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
+forecast.1997 <- forecast(model.arima, h = 12 * 117, level = c(95))
+dates <- rownames(data.frame(forecast.1997))
+
+# When CO2 is expected to hit 420ppm
+prediction.420.lower <- first.date(forecast.1997$lower, 420)
+prediction.420.expected <- first.date(forecast.1997$mean, 420)
+prediction.420.upper <- first.date(forecast.1997$upper, 420)
+
+# When CO2 is expected to hit 500ppm
+prediction.500.lower <- first.date(forecast.1997$lower, 500)
+prediction.500.expected <- first.date(forecast.1997$mean, 500)
+prediction.500.upper <- first.date(forecast.1997$upper, 500)
+
+# Expected CO2 levels in the year 2100
+prediction.2100.index <- match("Jan 2100", dates)
+prediction.2100.lower <- forecast.1997$lower[prediction.2100.index]
+prediction.2100.expected <- forecast.1997$mean[prediction.2100.index]
+prediction.2100.upper <- forecast.1997$upper[prediction.2100.index]
+```
+
+### When CO2 is expected to hit 420ppm and 500ppm
+
+| PPM    | Best Case Scenario       | Expected                    | Worst Case Scenario      |
+|--------|--------------------------|-----------------------------|--------------------------|
+| 420    | `r prediction.420.lower` | `r prediction.420.expected` | `r prediction.420.upper` |
+| 500    | `r prediction.500.lower` | `r prediction.500.expected` | `r prediction.500.upper` |
+
+### Expected CO2 levels in the year 2100
+
+| Best Case Scenario                  | Expected                               | Worst Case Scenario                 |
+|-------------------------------------|----------------------------------------|-------------------------------------|
+| `r round(prediction.2100.lower, 2)` | `r round(prediction.2100.expected, 2)` | `r round(prediction.2100.upper, 2)` |
+
+### Discussion
+
+These predictions are based upon the ARIMA model because the confidence band appeared more realistic than the confidence interval created by the polynomial model. The ARIMA model not using seasonal parameter would affect the results but because of the small magnitude of the seasonal variation it would likely not affect results by very much. Rising $CO_2$ levels would be primarily due to the trend and not the seasonality of the time series which would be capturing relatively similarly in both an ARIMA and SARIMA model by the drift parameter.
+
+Note: The best and worst case scenarios are based upon the 95% confidence interval.
