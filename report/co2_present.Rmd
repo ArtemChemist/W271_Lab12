@@ -212,28 +212,27 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 ## Best models on present data
 
 \textcolor{red}{Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.}
-
+In this section we will compare perfromance of various models in terms of their predictive power. For that we will save a small portion of our data, the most recent 2 years, as a test set. We will use the rest of the data (train set) to generate the models.
 ```{r Split into test and train, echo = TRUE}
+# Create a training set
 co2_train <- co2_diff %>% filter((week > yearweek("1998-01-01")) &
   (week < yearweek("2021-06-01")))
 
+# Cretae a test set
 co2_test <- co2_diff %>% filter(week >= yearweek("2021-06-01"))
 ```
 
+We first focus on seasolly adjusted data. As a first step we will perform a grid search of the model space, looking for the ARIMA model with the lowest BIC.
 ```{r Explore model space}
-# Generate a set of models AR(1)-AR(10) and MA(1)-MA(10)
-# with first and second degree of differencing.
-# Select the model with the lowest BIC
-
-model.bic <- co2_train %>%
+model.nsa <- co2_train %>%
   model(ARIMA(deseasoned ~ 1 + pdq(1:10, 1:2, 1:10) + PDQ(0, 0, 0),
     ic = "bic",
     stepwise = F, greedy = F
   ))
 
-# Report the winning model parameters
-# model.bic %>% report()
+model.nsa %>% report() # Report the winning model parameters
 ```
+
 
 ```{r Make final model}
 final_arima <- arima(co2_train$ppm,
@@ -242,6 +241,7 @@ final_arima <- arima(co2_train$ppm,
 )
 final_arima
 ```
+
 
 ```{r Test residuals}
 # Visualize ACF plot of its residuals
@@ -266,22 +266,22 @@ ggsave(filename = "./figures/plot_2_5.pdf", plot = resid_acf_plot, device = "pdf
 
 ```{r Forecast, results='hide'}
 frcst_length <- 110
-forecast_data <- forecast(final_arima, h=frcst_length)
+forecast_data <- forecast(final_arima, h = frcst_length)
 ```
 
 ```{r Forecast plotting}
-futuredate <- seq(ISOdate(2021,06,01), by = "week", length.out = frcst_length)
+futuredate <- seq(ISOdate(2021, 06, 01), by = "week", length.out = frcst_length)
 
 df_toPlot <- cbind.data.frame(futuredate, forecast_data$mean, forecast_data$lower, forecast_data$upper)
 df_toPlot$week <- yearweek(df_toPlot$futuredate)
 
-df_toPlot <- df_toPlot[c(2,4,6,7)]
+df_toPlot <- df_toPlot[c(2, 4, 6, 7)]
 names(df_toPlot) <- c("mean", "lower", "upper", "date")
 
-forecast_plot <- df_toPlot %>% ggplot() + 
+forecast_plot <- df_toPlot %>% ggplot() +
   aes(x = date, y = mean) +
-  geom_line(color = "red") + 
-  geom_ribbon(aes(ymin=lower,ymax=upper), fill="yellow", alpha=0.25) +
+  geom_line(color = "red") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "yellow", alpha = 0.25) +
   geom_line(data = co2_test, aes(x = week, y = ppm))
 
 ggsave(filename = "./figures/plot_2_6.pdf", plot = forecast_plot, device = "pdf", units = c("in"), height = 4, width = 10)
