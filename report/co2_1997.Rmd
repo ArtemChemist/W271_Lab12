@@ -294,7 +294,34 @@ dev.off()
 
 (\autoref{fig:wmonth_model}) show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
 
+```{r forecasting using the wmonth model}
+data.1997.max_month <- max(co2_df$index)
+data.future.max_month <- data.1997.max_month + (12 * (2020 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month, month = factor(rep(1:12)))
+model.wmonth.forecast <- predict.lm(model.wmonth, data.future, interval = "prediction", level = 0.95)
+model.wmonth.predicted <- cbind(data.future, model.wmonth.forecast)
 
+ggplot() +
+  geom_line(aes(x = index, y = value), color = 'black', data = co2_df) +
+  geom_ribbon(aes(x = index, ymin = lwr, ymax = upr), fill = "yellow", alpha = 0.65, data = model.wmonth.predicted) +
+  geom_line(aes(x = index, y = fit), color = 'red', data = model.wmonth.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels (with 95% CI) in blue',
+    x = 'Months since Jan 1959',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+
+ggsave(filename = "./figures/plot_wmonth_pred.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
+```
+
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot_wmonth_pred.png}
+  \caption{Future [CO2], according to quadratic model w monthly variable\label{fig:wmonth_frcst}}
+  \begin{figurenotes}
+    Surprisingly narrow predication interval 
+  \end{figurenotes}
+\end{figure}
 
 ## ARIMA times series model
 
