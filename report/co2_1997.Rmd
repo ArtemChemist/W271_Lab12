@@ -211,13 +211,11 @@ ggplot() + aes(x = index, y = value) +
 ggsave(filename = './figures/plot_quad_model.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=5)
 ```
 
-```{r residuals fro quad model, results='hide', echo=FALSE}
+```{r residuals for quad model, results='hide', echo=FALSE}
 png(file = './figures/plot_quad_mod_resid.png', height=4, width=5, units = c("in"), res = 600)
 checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
-
-
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[t]{0.45\textwidth}
@@ -232,6 +230,7 @@ dev.off()
   \end{subfigure}
   \caption{Linear model\label{fig:quad_mods}}
 \end{figure}
+
 A quadratic model fares slightly better than a linear model. It captures inherent non-linearity of the trend ( \autoref{fig:quad_model}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations.
 
 
@@ -249,6 +248,52 @@ dev.off()
     \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
     \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
 \end{figure}
+
+To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month:
+
+```{r quadratic model w month variable, echo = TRUE}
+model.wmonth <- lm(value ~ I(index^2) + index + month, data = co2_df)
+```
+
+```{r plot model w dummy months}
+quad_plot <- co2_df %>%
+ggplot() + aes(x = index, y = value) +
+  geom_point(color = "steelblue") +
+  geom_line(aes(y = fitted(model.wmonth)), color = "red", size = 1) +
+  labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20),
+        )
+
+ggsave(filename = './figures/plot_wmonth.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=5)
+```
+
+```{r residuals for model w month, results='hide'}
+png(file = './figures/plot_wmonth_resid.png', height=4, width=5, units = c("in"), res = 600)
+checkresiduals(model.wmonth, test=FALSE, plot = TRUE)
+dev.off()
+```
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{./figures/plot_wmonth.png}
+    \caption{Model plot and the observed data\label{fig:wmonth_model}}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{./figures/plot_wmonth_resid.png}
+    \caption{Residuals of the model\label{fig:wmonth_resid}}
+  \end{subfigure}
+  \caption{Quadratic model of [$CO_{2}$] augmented with month variable\label{fig:wmonth_mods}}
+\end{figure}
+
+
+(\autoref{fig:wmonth_model}) show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
+
 
 
 ## ARIMA times series model
