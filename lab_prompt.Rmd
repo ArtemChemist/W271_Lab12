@@ -456,8 +456,8 @@ test_sa$Date <- as.numeric(test_sa$Date)
 
 model_poly <- lm(average_sa ~ poly(Date, 4), data = train_sa)
 poly_pred <- predict(model_poly, newdata = test_sa)
+summary(model_poly)
 ```
-
 
 ## (3 points) Task Part 6b: How bad could it get?
 
