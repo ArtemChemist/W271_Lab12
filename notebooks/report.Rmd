@@ -367,3 +367,51 @@ ggplot() +
 #### Discussion
 
 TODO: Leaving for now because the deseasonalization went poorly
+
+### Forecasting Future CO2 Growth
+
+```{r forecast rising CO2 levels using modern data}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
+forecast.2022 <- forecast(model.seasonal, h = 52 * 150, level = c(95))
+dates <- rownames(data.frame(forecast.2022))
+
+# When CO2 is expected to hit 420ppm
+prediction_present.420.lower <- first.date(forecast.2022$lower, 420)
+prediction_present.420.expected <- first.date(forecast.2022$mean, 420)
+prediction_present.420.upper <- first.date(forecast.2022$upper, 420)
+
+# When CO2 is expected to hit 500ppm
+prediction_present.500.lower <- first.date(forecast.2022$lower, 500)
+prediction_present.500.expected <- first.date(forecast.2022$mean, 500)
+prediction_present.500.upper <- first.date(forecast.2022$upper, 500)
+
+# Expected CO2 levels in the year 2122 (first week)
+prediction_present.2122.index <- match("2122.013", dates)
+prediction_present.2122.lower <- forecast.2022$lower[prediction_present.2122.index]
+prediction_present.2122.expected <- forecast.2022$mean[prediction_present.2122.index]
+prediction_present.2122.upper <- forecast.2022$upper[prediction_present.2122.index]
+
+prediction_present.500.lower
+```
+
+#### When CO2 is expected to hit 420ppm and 500ppm
+
+| PPM    | Best Case Scenario               | Expected                            | Worst Case Scenario              |
+|--------|----------------------------------|-------------------------------------|----------------------------------|
+| 420    | `r prediction_present.420.lower` | `r prediction_present.420.expected` | `r prediction_present.420.upper` |
+| 500    | `r prediction_present.500.lower` | `r prediction_present.500.expected` | `r prediction_present.500.upper` |
+
+#### Expected CO2 levels in the year 2122
+
+| Best Case Scenario                          | Expected                                       | Worst Case Scenario                         |
+|---------------------------------------------|------------------------------------------------|---------------------------------------------|
+| `r round(prediction_present.2122.lower, 2)` | `r round(prediction_present.2122.expected, 2)` | `r round(prediction_present.2122.upper, 2)` |
+
+#### Discussion
+
+Clearly, the best case scenario is far more optimistic than we could realistically expect. In fact, the confidence intervals for the ARIMA estimates are much wider than we could hope for leading to us not being confident in these predictions. Much of this is due to the seasonality and nonstationarity of the data which both violate the assumptions of the ARIMA model.
+
+Even still, the 420ppm estimate was not too far off with the true date of $CO_2$ concentrations reaching 420ppm being between the expected and worse case scenarios. With this in mind, it would not be too surprising if the true date that $CO_2$ levels reach 500ppm was near the expected estimate if current trends continue.
