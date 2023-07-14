@@ -433,11 +433,30 @@ test_nsa <- co2_present %>% filter(Date >= as.Date("2021-01-01"))
 ```{r}
 model_sa <- auto.arima(train_sa$average_sa)
 model_nsa <- auto.arima(train_nsa$average)
+```
 
+```{r}
+summary(model_sa)
 ```
 
 
+```{r}
+summary(model_nsa)
+```
+```{r}
+pred_sa <- forecast(model_sa, h = length(test_sa$average_sa))
+pred_nsa <- forecast(model_nsa, h = length(test_nsa$average))
+```
 
+## TO:DO - Compare Models (SA & NSA) and analyze error metrics
+
+```{r}
+train_sa$Date <- as.numeric(train_sa$Date)
+test_sa$Date <- as.numeric(test_sa$Date)
+
+model_poly <- lm(average_sa ~ poly(Date, 4), data = train_sa)
+poly_pred <- predict(model_poly, newdata = test_sa)
+```
 
 
 ## (3 points) Task Part 6b: How bad could it get?
