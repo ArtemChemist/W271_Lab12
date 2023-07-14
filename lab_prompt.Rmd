@@ -14,11 +14,19 @@ In 1958 Keeling began continuous monitoring of atmospheric carbon dioxide concen
 ```{r load packages, echo = FALSE, message = FALSE}
 install.packages("tidyverse")
 library(tsibble)
-library(latex2exp)
+library(latex2exp) 
+library(feasts)
 library(forecast)
-library(dplyr)
+library(tseries)
+library(lubridate)
+```
+
+```{r}
+library(ggplot2)
+```
 
 
+```{r load packages, echo = FALSE, message = FALSE}
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
 ```
@@ -137,6 +145,8 @@ forecast(arima_model, h=24*12)
 
 Generate predictions for when atmospheric CO2 is expected to be at [420 ppm](https://research.noaa.gov/article/ArtMID/587/ArticleID/2764/Coronavirus-response-barely-slows-rising-carbon-dioxide) and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?
 
+
+
 # Report from the Point of View of the Present 
 
 One of the very interesting features of Keeling and colleagues' research is that they were able to evaluate, and re-evaluate the data as new series of measurements were released. This permitted the evaluation of previous models' performance and a much more difficult question: If their models' predictions were "off" was this the result of a failure of the model, or a change in the system? 
@@ -151,7 +161,25 @@ The most current data is provided by the United States' National Oceanic and Atm
 
 Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
 
+```{r pull data from the global monitoring laboratory}
+co2_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_weekly_mlo.csv"
+co2_month_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+
+co2_present <- read.csv(co2_url, comment.char = "#") %>%
+  mutate(index = yearweek(lubridate::make_datetime(year, month, day))) %>%
+  mutate(average = ifelse(average == -999.99, NA, average)) %>%
+  fill(average) %>%
+  tsibble(index = index)
+co2_present_month <- read.csv(co2_month_url, comment.char = "#") %>%
+  mutate(index = yearmonth(lubridate::make_datetime(year, month))) %>%
+  tsibble(index = index)
+```
+
+
 Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
+
+
+
 
 ## (1 point) Task 2b: Compare linear model forecasts against realized CO2
 
