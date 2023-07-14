@@ -145,6 +145,58 @@ forecast(arima_model, h=24*12)
 
 Generate predictions for when atmospheric CO2 is expected to be at [420 ppm](https://research.noaa.gov/article/ArtMID/587/ArticleID/2764/Coronavirus-response-barely-slows-rising-carbon-dioxide) and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?
 
+```{r}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
+
+forecast.1997 <- forecast(arima_model, h = 12 * 117, level = c(95))
+dates <- rownames(data.frame(forecast.1997))
+
+# When CO2 is expected to hit 420ppm
+prediction.420.lower <- first.date(forecast.1997$lower, 420)
+prediction.420.expected <- first.date(forecast.1997$mean, 420)
+prediction.420.upper <- first.date(forecast.1997$upper, 420)
+
+# When CO2 is expected to hit 500ppm
+prediction.500.lower <- first.date(forecast.1997$lower, 500)
+prediction.500.expected <- first.date(forecast.1997$mean, 500)
+prediction.500.upper <- first.date(forecast.1997$upper, 500)
+
+# Expected CO2 levels in the year 2100
+prediction.2100.index <- match("Jan 2100", dates)
+prediction.2100.lower <- forecast.1997$lower[prediction.2100.index]
+prediction.2100.expected <- forecast.1997$mean[prediction.2100.index]
+prediction.2100.upper <- forecast.1997$upper[prediction.2100.index]
+```
+
+
+```{r}
+forecast_df <- data.frame(
+  date = as.Date(seq(from = as.Date("1998-01-01"), by = "month", length.out = 12 * 117)),
+  CO2 = forecast.1997$mean,
+  lower = forecast.1997$lower,
+  upper = forecast.1997$upper
+)
+```
+
+
+```{r}
+# Generate plot
+ggplot(forecast_df, aes(x = date)) +
+  geom_ribbon(aes(ymin = X95., ymax = X95..1), fill = "grey80", alpha = 0.5) +
+  geom_line(aes(y = CO2), color = "darkblue") +
+  geom_hline(yintercept = 420, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 500, linetype = "dashed", color = "orange") +
+  labs(
+    x = "Year",
+    y = "CO2 Concentration (ppm)",
+    title = "Forecasted CO2 Concentration",
+    subtitle = "Red line: 420 ppm, Orange line: 500 ppm"
+  ) +
+  theme_minimal()
+```
 
 
 # Report from the Point of View of the Present 
@@ -286,6 +338,15 @@ In 1997 you made predictions about the first time that CO2 would cross 420 ppm. 
 
 After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.) 
 
+```{r}
+actual_420_date <- co2_present$Date[which(co2_present$average > 420)[1]]
+
+# Print the actual date vs. predicted dates
+cat("Actual date when CO2 levels first crossed 420 ppm: ", actual_420_date, "\n")
+cat("Predicted date from linear model: ", prediction.420.linear, "\n")
+cat("Predicted date from ARIMA model: ", prediction.420.arima, "\n")
+
+```
 
 
 
