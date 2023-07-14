@@ -28,7 +28,7 @@ author:
 acknowledgements: | 
   The authors would like to thank their instructors from MIDS 271.
 abstract: | 
-  The year is 1997 and global attention is turning toward the consequences of human-actions in our environmental system. The IPCC has been in existence and studying these trends for more than ten years, and has released its second assessment report in 1995. In this report, the IPCC notes that the balance of the evidence suggests that human-actions play a role in the changing climate. Although, there is little political will to change this activity, neither have global progressive and conservative politicians broken into clear partisan camps. Here, we assess data from the Mona Loa observatory to describe and predict global $CO_{2}$ concentrations under several possible scenarios. What we find, when we run the analysis, is going to be grim.
+  In this report we assess data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Assuming all forces that currently influence atmospheric carbon remain unchanged, our model predicts a grim future for the global climate.
 header-includes: 
   - '\usepackage{graphicx}'
   - '\usepackage{booktabs}'
@@ -68,12 +68,7 @@ theme_set(theme_minimal())
 
 # Introduction
 
-This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a question that has recieved considerable attention in the recent year. 
- At this time the data seem to show an alarming trend of increasing  levels year over year. This is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase with it. While the exact effects of the change this will have on the Earth's environment remain to be seen, expected changes include but are not limited to the following:
-- Heat waves
-- Drought
-- Rising sea levels
-With the data at hand, it is imperative that we discover whether we have enough evidence to show that this recent rise in $CO_2$ levels is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.
+This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a question that has recieved considerable attention in the recent year. At this time the data seem to show an alarming trend of increasing  levels year over year. This is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase leading to heat waves, drought and rising sea levels. \hfill\break\indent With the data at hand, it is imperative that we discover whether we have enough evidence to show that this recent rise in $CO_2$ levels is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.
 
 ## Carbon Emissions 
 \textcolor{red}{What are are carbon emissions, and why should anyone care about them? Briefly review what is known about the relationship between the burning of fossil fuels, atmospheric $CO_{2}$}
@@ -81,10 +76,8 @@ With the data at hand, it is imperative that we discover whether we have enough 
 
 # Atmospheric $CO_{2}$ Measurement and Data 
 
-The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. While there are other laboratories that collect $CO_2$ measurements, the Mauna Loa site has been collected $CO_2$ longer than any other site in the world which will give us the most data to work with as we conduct this analysis. The Mauna Loa site is also unique in that it is representative of air for the entire Northern Hemisphere due to its altitude and is not usually affected by nearby vegetation as the site is surrounded be lava flows.
-
-The Mauna Loa data is frequently used because of the amount *and* quality of the data collected. Specifically, this dataset contains accurate and robust measurements of the number of $CO_2$ molecules per million in a cubic meter of *dry* air. The term **concentration** may be used for familiarity but it should be stated that this is not the preferred term as the concentration of $CO_2$ may be affected be a number of factors unrelated to how much $CO_2$ is actually in the world's atmosphere at a given moment.
-
+The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. While there are other laboratories that collect $CO_2$ measurements, the Mauna Loa site has been collected $CO_2$ longer than any other site in the world which will give us the most data to work with as we conduct this analysis. The Mauna Loa site is also unique in that it is representative of air for the entire Northern Hemisphere due to its altitude and is not usually affected by nearby vegetation as the site is surrounded be lava flows. \hfill\break\indent The Mauna Loa data is frequently used because of the amount *and* quality of the data collected. Specifically, this dataset contains accurate and robust measurements of the number of $CO_2$ molecules per million in a cubic meter of *dry* air.
+\hfill\break\indent
 This site measures the concentration of $CO_2$ by funneling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, a higher density of $CO_2$ molecules will absorb more radiation. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
 
 ```{r load the data}
@@ -94,35 +87,16 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
                      month = factor(month(co2_ts$index)),
                      value = co2_ts$value)
 ```
-
-```{r plot the keeling curve, echo = FALSE}
-fig_1 <- co2_ts %>%
-  ggplot() + 
-  aes(x=index, y= value) + 
-  geom_line(color = 'steelblue') +
-  labs(
-    x = 'Month and Year',
-    y = TeX(r'($CO_2$ parts per million)')
-  ) + theme(axis.text.x=element_text(size=10), 
-            axis.text.y=element_text(size=10), 
-           axis.title.x=element_text(size=20),
-           axis.title.y=element_text(size=20),
-            )
-
-ggsave(filename = './figures/plot_original_ts.png', plot = fig_1, device = "png", units = c("in"), height=5, width=10)
-```
-
-# Exploratory analysis of historical trends in atmospheric $CO_{2}$
-\begingroup
-\setlength{\intextsep}{12pt}
-\setlength{\columnsep}{12pt}
-\begin{wrapfigure}[17]{l}{0.5\textwidth}
-    \centering\includegraphics[width=1\linewidth]{./figures/plot_original_ts.png}
+\begin{figure}
+    \centering\includegraphics[width=1\linewidth]{./figures/datamodels.png}
     \caption{Historic trend in monthly mean [$CO_2$]\label{fig:carbon}}
     \begin{figurenotes}
-      $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. These patterns point to the need of de-seasoning and de-trending before further analysis.
+      $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. Polynomila models capture these trends to varying drgree.
     \end{figurenotes}
-\end{wrapfigure}
+\end{figure}
+
+# Exploratory analysis of historical trends in atmospheric $CO_{2}$
+
 \par
 \textcolor{red}{Description how, where and why the data is generated}
 \par
@@ -130,144 +104,101 @@ ggsave(filename = './figures/plot_original_ts.png', plot = fig_1, device = "png"
 \par
 \textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
 \par
-\endgroup
 
 # Models and Forecasts 
 \textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
 ## Linear and Polynomial models 
 
-\textcolor{red}{Discuss whether a logarithmic transformation of the data would be appropriate. Fit a polynomial time trend model that incorporates seasonal dummy variables, and use this model to generate forecasts to the year 2020.}
+\begin{wrapfigure}[28]{h}[0cm]{0.4\textwidth}\centering
+    \vspace{-\normalbaselineskip}
+    \includegraphics[width=0.45\textwidth,height=11\normalbaselineskip]{./figures/plot_lin_mod_resid.png}
+    \caption{Diagnostic plots for residuals of the linear model\label{fig:lin_model_resid}}
+    \bigskip
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot_quad_mod_resid.png}
+    \caption{Diagnostic plots for residuals of the quadratic model\label{fig:quad_model_resid}}
+\end{wrapfigure}
 
 \begin{equation}
 \label{eq:one}
 \text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
 \end{equation} 
 
-This is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.
-\par
-We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$:  
-
-```{r estimate a linear model, echo=TRUE}
+```{r estimate a linear model}
 model_lin <- lm(formula = value ~ index, data = co2_df)
 ```
 
-```{r plot linear model}
-lin_plot <- co2_df %>%
-ggplot() + aes(x = index, y = value) +
-  geom_point(color = "steelblue") +
-  geom_line(aes(y = fitted(model_lin)), color = "red", size = 2) +
-  labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
-  theme(axis.text.x=element_text(size=20), 
-        axis.text.y=element_text(size=20), 
-        axis.title.x=element_text(size=20),
-        axis.title.y=element_text(size=20),
-        )
-
-ggsave(filename = './figures/plot_lin_model.png', plot = lin_plot, device = "png", units = c("in"), height= 4, width=5)
-```
-
 ```{r linear model residuals, results='hide', echo=FALSE}
-png(file = './figures/plot_lin_mod_resid.png', height=4, width=5, units = c("in"), res = 600)
+png(file = './figures/plot_lin_mod_resid.png', height=3, width=4, units = c("in"), res = 600)
 checkresiduals(model_lin, test=FALSE, plot = TRUE)
 dev.off()
 ```
-\begin{figure}[htbp]
-  \centering
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{./figures/plot_lin_model.png}
-    \caption{Linear model and the underlying data for [$CO_2$] \label{fig:lin_model}}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{./figures/plot_lin_mod_resid.png}
-    \caption{Diagnostic plots for residuals of the linear model\label{fig:lin_model_resid}}
-  \end{subfigure}
-  \caption{Linear model\label{fig:lin_mods}}
-\end{figure}
-
-
-While the residuals do appear to follow a normal distribution, it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely.
-
-In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$:
-
-```{r quadratic model, echo=TRUE}
+\autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.\hfill\break\indent We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. \hfill\break\indent In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$:
+```{r quadratic model}
 model.quad <- lm(formula = value ~ index + I(index^2), data = co2_df)
 ```
 
-```{r plot quadratic model}
-quad_plot <- co2_df %>%
-ggplot() + aes(x = index, y = value) +
-  geom_point(color = "steelblue") +
-  geom_line(aes(y = fitted(model.quad)), color = "red", size = 2) +
-  labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
-  theme(axis.text.x=element_text(size=20), 
-        axis.text.y=element_text(size=20), 
-        axis.title.x=element_text(size=20),
-        axis.title.y=element_text(size=20),
-        )
-
-ggsave(filename = './figures/plot_quad_model.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=5)
-```
-
-```{r residuals for quad model, results='hide', echo=FALSE}
-png(file = './figures/plot_quad_mod_resid.png', height=4, width=5, units = c("in"), res = 600)
+```{r residuals for quad model, results='hide'}
+png(file = './figures/plot_quad_mod_resid.png', height=3, width=4, units = c("in"), res = 600)
 checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
-\begin{figure}[htbp]
-  \centering
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{./figures/plot_quad_model.png}
-    \caption{Quadratic model and the underlying data for [$CO_2$] \label{fig:quad_model}}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{./figures/plot_quad_mod_resid.png}
-    \caption{Diagnostic plots for residuals of the quadratic model\label{fig:quad_model_resid}}
-  \end{subfigure}
-  \caption{Linear model\label{fig:quad_mods}}
-\end{figure}
+A quadratic model fares slightly better than a linear model. It captures inherent non-linearity of the trend (\autoref{fig:carbon}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations. \hfill\break\indent There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
 
-A quadratic model fares slightly better than a linear model. It captures inherent non-linearity of the trend ( \autoref{fig:quad_model}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations.
-
-
-There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
-
-```{r decompose, results='hide'}
+```{r decompose, results='hide', warning=FALSE}
 co2_decomp <- decompose(co2)
 
-png(file = './figures/plot_decomposition.png', height=4, width=5, units = c("in"), res = 600)
-plot(co2_decomp)
+co2_df <- cbind(co2_df, co2_decomp$seasonal, co2_decomp$trend)
+
+names(co2_df) = c("index", "month", "value", "seasonal", "trend")
+
+trend <- ggplot(data = co2_df) + aes(x = index, y = trend ) + geom_line()
+seasonal <- ggplot(data = co2_df) + aes(x = index, y = seasonal ) + geom_line()
+
+
+png(file = './figures/plot_decomposition.png', height=3, width=3, units = c("in"), res = 600)
+trend/seasonal
 dev.off()
 ```
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
+\begin{wrapfigure}[14]{l}{0.5\textwidth}
+    \centering
+    \vspace{-\normalbaselineskip}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot_decomposition.png}
     \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
-\end{figure}
+\end{wrapfigure} 
 
 To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month:
 
-```{r quadratic model w month variable, echo = TRUE}
+```{r quadratic model w month variable}
 model.wmonth <- lm(value ~ I(index^2) + index + month, data = co2_df)
 ```
 
-```{r plot model w dummy months}
+```{r plot all models}
 quad_plot <- co2_df %>%
 ggplot() + aes(x = index, y = value) +
-  geom_point(color = "steelblue") +
-  geom_line(aes(y = fitted(model.wmonth)), color = "red", size = 1) +
-  labs(x = 'Month and Year', y = TeX(r'($CO_2$ parts per million)')) +
+  geom_line(aes(y = fitted(model.wmonth), color = "Quadratic model + month"), size = 0.75) +
+  geom_line(aes(y = fitted(model.quad), color = "Quadratic model"), size = 0.75) +
+  geom_line(aes(y = fitted(model_lin), color = "Linear model"), size = 0.75) +
+  geom_point(aes(color = "Observed data"), size = 0.5) +
+  labs(x = 'Months since begining of measurements', y = TeX(r'(\[$CO_2$\], parts per million)')) +
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20), 
         axis.title.x=element_text(size=20),
         axis.title.y=element_text(size=20),
-        )
+        ) +
+  scale_color_manual(name = "", values = c("Observed data" = "black", 
+                                           "Linear model" = "blue",
+                                           "Quadratic model" = "green", 
+                                           "Quadratic model + month" = "red" ))+
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    legend.position=c(.15,.85)) 
 
-ggsave(filename = './figures/plot_wmonth.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=5)
+
+ggsave(filename = './figures/datamodels.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=8)
 ```
 
 ```{r residuals for model w month, results='hide'}
@@ -276,23 +207,13 @@ checkresiduals(model.wmonth, test=FALSE, plot = TRUE)
 dev.off()
 ```
 
-\begin{figure}[htbp]
-  \centering
-  \begin{subfigure}[t]{0.45\textwidth}
+\begin{wrapfigure}[14]{l}{0.5\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{./figures/plot_wmonth.png}
-    \caption{Model plot and the observed data\label{fig:wmonth_model}}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{./figures/plot_wmonth_resid.png}
-    \caption{Residuals of the model\label{fig:wmonth_resid}}
-  \end{subfigure}
-  \caption{Quadratic model of [$CO_{2}$] augmented with month variable\label{fig:wmonth_mods}}
-\end{figure}
-
-
-(\autoref{fig:wmonth_model}) show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
+    \vspace{-\normalbaselineskip}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot_wmonth_resid.png}
+     \caption{Diagnostic plots for quadratic model with month variable\label{fig:wmonth_resid}}
+\end{wrapfigure} 
+\autoref{fig:carbon} show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
 
 ```{r forecasting using the wmonth model}
 data.1997.max_month <- max(co2_df$index)
@@ -312,7 +233,7 @@ pred_plot <- ggplot() +
     y = TeX(r'($CO_2$ parts per million)')
   )
 
-ggsave(filename = "./figures/plot_wmonth_pred.png", plot = pred_plot, device = "png", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot_wmonth_pred.png", plot = pred_plot, device = "png", units = c("in"), height = 4, width = 8)
 ```
 
 \begin{figure}[ht]
@@ -323,13 +244,13 @@ ggsave(filename = "./figures/plot_wmonth_pred.png", plot = pred_plot, device = "
   \end{figurenotes}
 \end{figure}
 
-\autoref{fig:wmonth_frcst} demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliabl follow the pattern of the historical data.
+\autoref{fig:wmonth_frcst} demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliably follow the pattern of the historical data.
 
 ## ARIMA times series model
 
 \textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
 
-```{r Split into test and train, echo = TRUE}
+```{r Split into test and train, echo = TRUE, warning=FALSE}
 my_lag <- 12
 co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
 co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
@@ -397,7 +318,7 @@ ggsave(filename = "./figures/plot1_frcst2022.pdf", plot = forecast_plot, device 
 
 # Conclusions 
 
-\textcolor{red}{What to conclude is unclear. }
+\textcolor{red}{In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasobnable assumption, our model predicts a grim future for the global climate. }
 
 \bibliographystyle{aea}
 \bibliography{references}
