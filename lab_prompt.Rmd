@@ -407,6 +407,38 @@ In summary, while the model does a good job of explaining the variance in actual
 
 Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.
 
+```{r}
+co2_ts <- ts(co2_present$average, frequency = 52)
+
+# Determine the seasonal component 
+co2_stl <- stl(co2_ts, s.window = "periodic")
+
+# Seasonal adjustment
+co2_present_sa <- data.frame(
+  Date = co2_present$Date,
+  average_sa = co2_stl$time.series[, "seasonal"]
+)
+```
+
+
+```{r}
+train_sa <- co2_present_sa %>% filter(Date < as.Date("2021-01-01"))
+test_sa <- co2_present_sa %>% filter(Date >= as.Date("2021-01-01"))
+
+train_nsa <- co2_present %>% filter(Date < as.Date("2021-01-01"))
+test_nsa <- co2_present %>% filter(Date >= as.Date("2021-01-01"))
+```
+
+
+```{r}
+model_sa <- auto.arima(train_sa$average_sa)
+model_nsa <- auto.arima(train_nsa$average)
+
+```
+
+
+
+
 
 ## (3 points) Task Part 6b: How bad could it get?
 
