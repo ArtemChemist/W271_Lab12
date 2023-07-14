@@ -228,15 +228,74 @@ autoplot(co2_present_month_pacf)
 
 Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) 
 
+```{r}
+data.1997 <- data.frame(index = 1:nrow(co2_ts), month = factor(month(co2_ts$index)), value = co2_ts$value)
+```
+
+```{r}
+# Generate newdata to predict on
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2023 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month)
+
+# Create forecasts
+model.linear.forecast <- predict(model.linear, data.future, interval = "prediction", level = 0.99)
+model.linear.predicted <- cbind(data.future, model.linear.forecast) %>%
+  mutate(value = fit, index = yearmonth(seq(as.Date("1998/1/1"), as.Date("2023/12/1"), by = "month"))) %>%
+  select(value, index) %>%
+  head(-6) # remove the last 6 months
+
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present_month) +
+  geom_line(aes(x = index, y = value), color = 'steelblue', data = model.linear.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
 ## (1 point) Task 3b: Compare ARIMA models forecasts against realized CO2  
 
 Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present. 
+
+```{r}
+model.arima.predicted <- data.frame(forecast(model.arima, h = (12 * 25) + 6, level = c(0)))
+model.arima.predicted <- data.frame(
+  index = yearmonth(rownames(model.arima.predicted)),
+  average = model.arima.predicted$Point.Forecast
+)
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'steelblue', data = model.arima.predicted) +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present_month) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
 
 ## (3 points) Task 4b: Evaluate the performance of 1997 linear and ARIMA models 
 
 In 1997 you made predictions about the first time that CO2 would cross 420 ppm. How close were your models to the truth? 
 
 After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.) 
+
+
+
+
+
+
+
+
+
+
+
 
 ## (4 points) Task 5b: Train best models on present data
 
