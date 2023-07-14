@@ -6,27 +6,27 @@ month: "`r format(Sys.Date(), '%m')`"
 year: "`r format(Sys.Date(), '%Y')`"
 vol: 0
 issue: 0
-keywords:
-  - Replication
-  - Modern Science
 author:
-  - name: Majid Maki-Nayeri
-    firstname: Maki-Nayeri
-    surname: Maki-Nayeri
-    email: m_maki@ischool.berkeley.edu
-    affiliation: UC Berkeley, School of Information
-  - name: Vinod Bakthavachalam
-    firstname: Vinod
-    surname: Bakthavachalam
-    email: vinodb@ischool.berkeley.edu
-    affiliation: UC Berkeley, School of Information
+  - name: Sean Seneviratne
+    firstname: Sean
+    surname: Seneviratne
+    email: sean_senev@ischool.berkeley.edu
+    affiliation: UC Berkeley
+  - name: Trevor Dalton
+    firstname: Trevor
+    surname: Dalton
+    email: trevor.dalton@ischool.berkeley.edu
+    affiliation: UC Berkeley
+  - name: Kyle Ruan
+    firstname: Kyle
+    surname: Ruan
+    email: kyleruan@ischool.berkeley.edu
+    affiliation: UC Berkeley
   - name: Artem Lebedev
     firstname: Artem 
     surname: Lebedev
     email: artem.lebedev@berkeley.edu
-    affiliation: McMaster University, Department of Chemistry and Biochemistry
-acknowledgements: | 
-  The authors would like to thank their instructors from MIDS 271.
+    affiliation: McMaster University
 abstract: | 
   In this report we assess data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Assuming all forces that currently influence atmospheric carbon remain unchanged, our model predicts a grim future for the global climate.
 header-includes: 
