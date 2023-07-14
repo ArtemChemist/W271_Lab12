@@ -178,7 +178,50 @@ co2_present_month <- read.csv(co2_month_url, comment.char = "#") %>%
 
 Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
 
+```{r}
+co2_present %>%
+  ggplot(aes(x = index, y = average)) +
+  geom_line() +
+  ggtitle("Weekly CO2 levels from start to present") +
+  xlab("Year") +
+  ylab("CO2 level")
 
+# Plot the monthly series
+co2_present_month %>%
+  ggplot(aes(x = index, y = average)) +
+  geom_line() +
+  ggtitle("Monthly CO2 levels from start to present") +
+  xlab("Year") +
+  ylab("CO2 level")
+
+# Decompose the time series to see trend, seasonality and residuals. The 'stl' function is used because 'decompose' won't work on 'tsibble' objects.
+# Decompose the weekly series
+co2_present_decomposed <- co2_present %>%
+  model(STL(average ~ season(window = "periodic"))) %>%
+  components()
+
+autoplot(co2_present_decomposed)
+
+# Decompose the monthly series
+co2_present_month_decomposed <- co2_present_month %>%
+  model(STL(average ~ season(window = "periodic"))) %>%
+  components()
+
+autoplot(co2_present_month_decomposed)
+co2_present_acf <- ACF(co2_present, average)
+autoplot(co2_present_acf)
+
+co2_present_pacf <- PACF(co2_present, average)
+autoplot(co2_present_pacf)
+
+co2_present_month_acf <- ACF(co2_present_month, average)
+autoplot(co2_present_month_acf)
+
+co2_present_month_pacf <- PACF(co2_present_month, average)
+autoplot(co2_present_month_pacf)
+
+
+```
 
 
 ## (1 point) Task 2b: Compare linear model forecasts against realized CO2
