@@ -198,7 +198,6 @@ ggplot(forecast_df, aes(x = date)) +
   theme_minimal()
 ```
 
-
 # Report from the Point of View of the Present 
 
 One of the very interesting features of Keeling and colleagues' research is that they were able to evaluate, and re-evaluate the data as new series of measurements were released. This permitted the evaluation of previous models' performance and a much more difficult question: If their models' predictions were "off" was this the result of a failure of the model, or a change in the system? 
@@ -246,6 +245,7 @@ co2_present_month %>%
   xlab("Year") +
   ylab("CO2 level")
 
+
 # Decompose the time series to see trend, seasonality and residuals. The 'stl' function is used because 'decompose' won't work on 'tsibble' objects.
 # Decompose the weekly series
 co2_present_decomposed <- co2_present %>%
@@ -275,7 +275,6 @@ autoplot(co2_present_month_pacf)
 
 ```
 
-
 ## (1 point) Task 2b: Compare linear model forecasts against realized CO2
 
 Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) 
@@ -296,7 +295,6 @@ model.linear.predicted <- cbind(data.future, model.linear.forecast) %>%
   mutate(value = fit, index = yearmonth(seq(as.Date("1998/1/1"), as.Date("2023/12/1"), by = "month"))) %>%
   select(value, index) %>%
   head(-6) # remove the last 6 months
-
 
 ggplot() +
   geom_line(aes(x = index, y = average), color = 'black', data = co2_present_month) +
@@ -339,28 +337,76 @@ In 1997 you made predictions about the first time that CO2 would cross 420 ppm. 
 After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.) 
 
 ```{r}
-actual_420_date <- co2_present$Date[which(co2_present$average > 420)[1]]
+co2_monthly_avg <- co2_present %>%
+  mutate(month_year = paste(year, month, sep = "-")) %>%
+  group_by(month_year) %>%
+  summarise(avg_co2 = mean(average, na.rm = TRUE))
 
-# Print the actual date vs. predicted dates
-cat("Actual date when CO2 levels first crossed 420 ppm: ", actual_420_date, "\n")
-cat("Predicted date from linear model: ", prediction.420.linear, "\n")
-cat("Predicted date from ARIMA model: ", prediction.420.arima, "\n")
+co2_monthly_avg$month_year <- as.Date(paste(co2_monthly_avg$month_year, "01", sep = "-"))
+co2_monthly_avg_ts <- ts(co2_monthly_avg$avg_co2, start = c(1997, 1), frequency = 12)
 
+#Comparison of forecasted and actual values
+comparison <- data.frame(
+  date = time(co2_monthly_avg_ts),
+  actual = as.numeric(co2_monthly_avg_ts),
+  predicted = c(forecast.1997$mean, rep(NA, length(co2_monthly_avg_ts) - length(forecast.1997$mean)))
+)
+
+head(comparison)
 ```
 
 
+```{r}
+#Error metrics
+comparison <- comparison %>%
+  mutate(error = actual - predicted,
+         MAE = abs(error),
+         RMSE = error^2)
+
+# Calculate overall MAE and RMSE
+MAE <- mean(comparison$MAE, na.rm = TRUE)
+RMSE <- sqrt(mean(comparison$RMSE, na.rm = TRUE))
+
+# 3. Formal test: Mincer-Zarnowitz regression
+comparison <- na.omit(comparison)
+MZ_reg <- lm(actual ~ predicted + 0, data = comparison)
+
+MAE
+RMSE
+MZ_reg
+```
+In this case, an MAE of 104.9443 means that our model, on average, makes an error of about 104.9443 units in its predictions. An RMSE of 112.3219 means that our model's predictions are, on average, approximately 112.3219 units away from the actual values.
+
+The linear regression is modeling the actual CO2 level as a function of the predicted CO2 level. The coefficient for the predicted variable is 0.762291. This means that for each unit increase in the predicted CO2 level, we would expect an average increase of about 0.76 units in the actual CO2 level. The p-value is extremely small (< 2.2e-16), meaning this effect is statistically significant. The R-squared is 0.9936, indicating that 99.36% of the variance in the actual CO2 levels is explained by the predicted levels, which is quite high.
+
+However, there are significant residuals, ranging from -47.105 to 55.018, with a median of 3.428. This suggests that while the predicted values explain much of the variance, they systematically under- or overestimate the actual CO2 levels by up to about 55 units.
+
+```{r}
+#Forecast performance: Diebold-Mariano test
+DM_test <- dm.test(comparison$actual, comparison$predicted, alternative = "two.sided")
+DM_test
+```
+The DM test is a procedure for comparing forecast accuracy. The null hypothesis is that the two methods (in this case, the actual and predicted values) have the same forecast accuracy.
+
+The DM statistic is -83.65 and the p-value is less than 2.2e-16. This extremely low p-value leads us to reject the null hypothesis, implying that there is a statistically significant difference between the forecast accuracy of the actual and predicted CO2 levels. Given that the DM statistic is negative, it indicates that the actual values have a higher forecast accuracy than the predicted values.
+
+https://eranraviv.com/volatility-forecast-evaluation-in-r/
 
 
+```{r}
+ggplot(data = comparison, aes(x = predicted, y = actual)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'red') +
+  labs(title = "Actual vs. Predicted CO2 Levels", x = "Predicted", y = "Actual") +
+  theme_minimal()
 
-
-
-
-
-
+```
+In summary, while the model does a good job of explaining the variance in actual CO2 levels (as indicated by the high R-squared value), there are significant differences between the actual and predicted values, suggesting that the model may be systematically under- or overestimating the actual levels. Additionally, the DM test suggests that the actual values have a higher forecast accuracy than the predicted values.
 
 ## (4 points) Task 5b: Train best models on present data
 
 Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.
+
 
 ## (3 points) Task Part 6b: How bad could it get?
 
