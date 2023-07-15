@@ -92,9 +92,9 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
     \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
     \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
   \end{subfigure}
+  \setlength{\belowcaptionskip}{-30pt}
   \caption{Monthly mean [$CO_2$] and its models\label{fig:mainplot}}
 \end{figure}
-
 # Exploratory analysis of historical trends in atmospheric $CO_{2}$
 
 \par
@@ -109,6 +109,10 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
 \textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
 ## Linear and Polynomial models 
+\begin{equation}
+\label{eq:one}
+\text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
+\end{equation} 
 
 \begin{figure}[h]
   \centering
@@ -121,13 +125,11 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
     \centering\includegraphics[width=\textwidth]{./figures/plot_quad_mod_resid.png}
     \caption{Quadratic model\label{fig:quad_model_resid}}
   \end{subfigure}
-  \caption{Diagnostic plots for residuals of polynomial models\label{fig:mainplot}}
+  \setlength{\belowcaptionskip}{-20pt}
+  \caption{Diagnostic plots for residuals of polynomial models\label{fig:residplot}}
 \end{figure}
 
-\begin{equation}
-\label{eq:one}
-\text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
-\end{equation} 
+
 
 ```{r estimate a linear model, results='hide', warning=FALSE}
 model_lin <- lm(formula = value ~ index, data = co2_df)
