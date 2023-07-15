@@ -72,7 +72,7 @@ This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a 
 
 # Atmospheric $CO_{2}$ Measurement and Data 
 
-The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. This site has been collecting $CO_2$ longer than any other site in the world. It is also unique in that it is representative of air for the entire Northern Hemisphere as it is not affected by nearby vegetation as the site is surrounded be lava flows. All in all, the Mauna Loa data is the gold standard of atmospheric carbon measurements because of the amount *and* quality of the data collected.\hfill\break\indent This site measures the concentration of $CO_2$ by funneling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, a higher density of $CO_2$ molecules will absorb more radiation. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
+The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. This site has been collecting $CO_2$ longer than any other site in the world. It is also unique in that it is representative of air for the entire Northern Hemisphere as it is not affected by nearby vegetation as the site is surrounded be lava flows. All in all, the Mauna Loa data is the gold standard of atmospheric carbon measurements because of the amount *and* quality of the data collected.\hfill\break\indent This site measures the concentration of $CO_2$ by funneling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, and thus the degree of absorption is proportional to [$CO_2$]. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
 
 ```{r load the data}
 co2_ts <- tsibble::as_tsibble(co2)
@@ -110,47 +110,54 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
 
 ## Linear and Polynomial models 
 
-\begin{wrapfigure}[28]{h}[0cm]{0.4\textwidth}\centering
-    \vspace{-\normalbaselineskip}
-    \includegraphics[width=0.45\textwidth,height=11\normalbaselineskip]{./figures/plot_lin_mod_resid.png}
-    \caption{Diagnostic plots for residuals of the linear model\label{fig:lin_model_resid}}
-    \bigskip
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot_quad_mod_resid.png}
-    \caption{Diagnostic plots for residuals of the quadratic model\label{fig:quad_model_resid}}
-\end{wrapfigure}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering\includegraphics[width=\textwidth]{./figures/plot_lin_mod_resid.png}
+    \caption{Linear model\label{fig:lin_model_resid}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering\includegraphics[width=\textwidth]{./figures/plot_quad_mod_resid.png}
+    \caption{Quadratic model\label{fig:quad_model_resid}}
+  \end{subfigure}
+  \caption{Diagnostic plots for residuals of polynomial models\label{fig:mainplot}}
+\end{figure}
 
 \begin{equation}
 \label{eq:one}
 \text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
 \end{equation} 
 
-```{r estimate a linear model}
+```{r estimate a linear model, results='hide', warning=FALSE}
 model_lin <- lm(formula = value ~ index, data = co2_df)
 ```
 
-```{r linear model residuals, results='hide', echo=FALSE}
+```{r linear model residuals, results='hide', echo=FALSE, warning=FALSE}
 png(file = './figures/plot_lin_mod_resid.png', height=3, width=4, units = c("in"), res = 600)
 checkresiduals(model_lin, test=FALSE, plot = TRUE)
 dev.off()
 ```
-\autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.\hfill\break\indent We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. \hfill\break\indent In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$:
-```{r quadratic model}
+\autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.\hfill\break\indent We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. 
+```{r quadratic model, results='hide', warning=FALSE}
 model.quad <- lm(formula = value ~ index + I(index^2), data = co2_df)
 ```
 
-```{r residuals for quad model, results='hide'}
+```{r residuals for quad model, results='hide', warning=FALSE}
 png(file = './figures/plot_quad_mod_resid.png', height=3, width=4, units = c("in"), res = 600)
 checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
-A quadratic model fares slightly better than a linear model. It captures inherent non-linearity of the trend (\autoref{fig:carbon}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations. \hfill\break\indent There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
+In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$. This model fares slightly better than a linear model. It captures inherent non-linearity of the trend (\autoref{fig:carbon}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations. \hfill\break\indent There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
 
 ```{r decompose, results='hide', warning=FALSE}
 co2_decomp <- decompose(co2)
-co2_df <- cbind(co2_df, co2_decomp$seasonal, co2_decomp$trend)
+co2_df <- cbind.data.frame(co2_df, co2_decomp$seasonal, co2_decomp$trend)
 names(co2_df) = c("index", "month", "value", "seasonal", "trend")
-trend <- ggplot(data = co2_df) + aes(x = index, y = trend ) + geom_line()
-seasonal <- ggplot(data = co2_df) + aes(x = index, y = seasonal ) + geom_line()
+trend <- ggplot(data = co2_df) + aes(x = index, y = trend ) + geom_line() + 
+  scale_y_continuous(expand = c(0,0))
+seasonal <- ggplot(data = co2_df) + aes(x = index, y = seasonal ) + geom_line() + 
+  scale_y_continuous(expand = c(0,0))
 
 png(file = './figures/plot_decomposition.png', height=3, width=3, units = c("in"), res = 600)
 trend/seasonal
