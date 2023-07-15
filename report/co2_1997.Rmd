@@ -238,7 +238,7 @@ model.wmonth.predicted <- cbind.data.frame(polynomdate , model.wmonth.forecast)
 
 \textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
 
-```{r Split into test and train, echo = TRUE, warning=FALSE}
+```{r Split into test and train, warning=FALSE}
 my_lag <- 12
 co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
 co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
@@ -257,7 +257,7 @@ model.bic <- co2_ts %>%
   ))
 
 # Report the winning model parameters
-model.bic %>% report()
+# model.bic %>% report()
 ```
 
 ```{r Make final model}
@@ -268,7 +268,26 @@ hist_arima <- arima(co2_ts$value,
 hist_arima
 ```
 
-```{r forecast to 2022}
+```{r calculate BIC}
+
+find_bic <- function(arima_model, ts ){
+log_likelihood <- logLik(arima_model) #Get log-likelihood
+p <- length(arima_model$coef) # Get the number of parameters
+n <- length(ts) # Get the number of observations
+bic <- -2 * log_likelihood + p * log(n) # Calculate BIC
+print(bic) # Print the BIC value
+}
+
+find_bic(hist_arima, co2_ts$value)
+```
+
+```{r auto.arima}
+model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+model.arima
+# find_bic(model.arima, co2)
+```
+
+```{r forecast to 2022, echo=TRUE}
 frcst_2022 <- forecast(hist_arima, h=frcst_length)
 ```
 
@@ -300,7 +319,7 @@ ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device 
 
 
 \begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot1_frcst2022.png}
+  \includegraphics[width=.95\linewidth]{./figures/plot1_frcst2022.png}
   \caption{Forecast for future CO2 concentration \label{fig:frcst}}
   \begin{figurenotes}
     Unrealistically narrow prediction interval for polynomial model
