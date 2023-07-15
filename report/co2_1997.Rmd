@@ -78,6 +78,7 @@ The data we will be using for this analysis is the $CO_2$ measurements from a la
 co2_ts <- tsibble::as_tsibble(co2)
 
 co2_df <- data.frame(index = 1:nrow(co2_ts),
+                     my_date = as.Date(co2_ts$index),
                      month = factor(month(co2_ts$index)),
                      value = co2_ts$value)
 ```
@@ -164,11 +165,11 @@ In attempt to remedy these issues we estimated a quadratic model, which is a var
 ```{r decompose, results='hide', warning=FALSE}
 co2_decomp <- decompose(co2)
 co2_df <- cbind.data.frame(co2_df, co2_decomp$seasonal, co2_decomp$trend)
-names(co2_df) = c("index", "month", "value", "seasonal", "trend")
-trend <- ggplot(data = co2_df) + aes(x = index, y = trend ) + geom_line() + 
-  scale_y_continuous(expand = c(0,0))
-seasonal <- ggplot(data = co2_df) + aes(x = index, y = seasonal ) + geom_line() + 
-  scale_y_continuous(expand = c(0,0))
+names(co2_df) = c("index", "my_date", "month", "value", "seasonal", "trend")
+trend <- ggplot(data = co2_df) + aes(x = my_date, y = trend ) + geom_line() + 
+  scale_y_continuous(expand = c(0,0)) + labs(x = '')
+seasonal <- ggplot(data = co2_df) + aes(x = my_date, y = seasonal ) + geom_line() + 
+  scale_y_continuous(expand = c(0,0)) + labs(x = '')
 
 png(file = './figures/plot_decomposition.png', height=3, width=3, units = c("in"), res = 600)
 trend/seasonal
@@ -183,12 +184,12 @@ model.wmonth <- lm(value ~ I(index^2) + index + month, data = co2_df)
 
 ```{r plot all models}
 quad_plot <- co2_df %>%
-ggplot() + aes(x = index, y = value) +
+ggplot() + aes(x = my_date, y = value) +
   geom_line(aes(y = fitted(model.wmonth), color = "Quadratic model + month"), size = 0.75) +
   geom_line(aes(y = fitted(model.quad), color = "Quadratic model"), size = 0.75) +
   geom_line(aes(y = fitted(model_lin), color = "Linear model"), size = 0.75) +
   geom_point(aes(color = "Observed data"), size = 0.5) +
-  labs(x = 'Months since begining of measurements', y = TeX(r'(\[$CO_2$\], parts per million)')) +
+  labs(x = '', y = TeX(r'(\[$CO_2$\], parts per million)')) +
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20), 
         axis.title.x=element_text(size=20),
