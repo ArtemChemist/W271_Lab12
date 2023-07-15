@@ -138,7 +138,15 @@ png(file = './figures/plot_lin_mod_resid.png', height=3, width=4, units = c("in"
 checkresiduals(model_lin, test=FALSE, plot = TRUE)
 dev.off()
 ```
-\autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.\hfill\break\indent We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. 
+\autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.
+\begin{wrapfigure}[14]{r}{0.5\textwidth}
+    \centering
+    \vspace{-\normalbaselineskip}
+    \hspace{-10pt}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot_wmonth_resid.png}
+     \caption{Diagnostic plots for quadratic model with month variable\label{fig:wmonth_resid}}
+\end{wrapfigure} 
+We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. 
 ```{r quadratic model, results='hide', warning=FALSE}
 model.quad <- lm(formula = value ~ index + I(index^2), data = co2_df)
 ```
@@ -148,6 +156,7 @@ png(file = './figures/plot_quad_mod_resid.png', height=3, width=4, units = c("in
 checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
+
 In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$. This model fares slightly better than a linear model. It captures inherent non-linearity of the trend (\autoref{fig:carbon}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations. \hfill\break\indent There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
 
 ```{r decompose, results='hide', warning=FALSE}
@@ -164,7 +173,7 @@ trend/seasonal
 dev.off()
 ```
 
-To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month:
+To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month. \autoref{fig:carbon} show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
 
 ```{r quadratic model w month variable}
 model.wmonth <- lm(value ~ I(index^2) + index + month, data = co2_df)
@@ -204,13 +213,6 @@ checkresiduals(model.wmonth, test=FALSE, plot = TRUE)
 dev.off()
 ```
 
-\begin{wrapfigure}[14]{l}{0.5\textwidth}
-    \centering
-    \vspace{-\normalbaselineskip}
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot_wmonth_resid.png}
-     \caption{Diagnostic plots for quadratic model with month variable\label{fig:wmonth_resid}}
-\end{wrapfigure} 
-\autoref{fig:carbon} show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
 
 ```{r forecasting using the wmonth model}
 data.1997.max_month <- max(co2_df$index)
@@ -237,7 +239,7 @@ ggsave(filename = "./figures/plot_wmonth_pred.png", plot = pred_plot, device = "
   \includegraphics[width=.8\linewidth]{./figures/plot_wmonth_pred.png}
   \caption{Future [CO2], according to quadratic model w monthly variable\label{fig:wmonth_frcst}}
   \begin{figurenotes}
-    Unrealistically narrow predication interval 
+    Unrealistically narrow prediction interval 
   \end{figurenotes}
 \end{figure}
 
