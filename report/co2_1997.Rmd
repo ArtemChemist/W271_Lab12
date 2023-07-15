@@ -81,12 +81,18 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
                      month = factor(month(co2_ts$index)),
                      value = co2_ts$value)
 ```
-\begin{figure}
-    \centering\includegraphics[width=1\linewidth]{./figures/datamodels.png}
-    \caption{Historic trend in monthly mean [$CO_2$]\label{fig:carbon}}
-    \begin{figurenotes}
-      $CO_2$ concentration exhibits accelerating growth, with strong seasonal oscillations. Polynomila models capture these trends to varying drgree.
-    \end{figurenotes}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.6\textwidth}
+    \centering\includegraphics[width=\textwidth]{./figures/datamodels.png}
+    \caption{Historic trend [$CO_2$] and its models\label{fig:carbon}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
+    \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
+  \end{subfigure}
+  \caption{Monthly mean [$CO_2$] and its models\label{fig:mainplot}}
 \end{figure}
 
 # Exploratory analysis of historical trends in atmospheric $CO_{2}$
@@ -141,25 +147,15 @@ A quadratic model fares slightly better than a linear model. It captures inheren
 
 ```{r decompose, results='hide', warning=FALSE}
 co2_decomp <- decompose(co2)
-
 co2_df <- cbind(co2_df, co2_decomp$seasonal, co2_decomp$trend)
-
 names(co2_df) = c("index", "month", "value", "seasonal", "trend")
-
 trend <- ggplot(data = co2_df) + aes(x = index, y = trend ) + geom_line()
 seasonal <- ggplot(data = co2_df) + aes(x = index, y = seasonal ) + geom_line()
-
 
 png(file = './figures/plot_decomposition.png', height=3, width=3, units = c("in"), res = 600)
 trend/seasonal
 dev.off()
 ```
-\begin{wrapfigure}[14]{l}{0.5\textwidth}
-    \centering
-    \vspace{-\normalbaselineskip}
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot_decomposition.png}
-    \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
-\end{wrapfigure} 
 
 To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month:
 
@@ -192,7 +188,7 @@ ggplot() + aes(x = index, y = value) +
     legend.position=c(.15,.85)) 
 
 
-ggsave(filename = './figures/datamodels.png', plot = quad_plot, device = "png", units = c("in"), height= 4, width=8)
+ggsave(filename = './figures/datamodels.png', plot = quad_plot, device = "png", units = c("in"), height= 3, width=6)
 ```
 
 ```{r residuals for model w month, results='hide'}
