@@ -52,3 +52,4 @@ rsconnect/
 **/*.log
 *.~lock.
 .gitignore
+**/*.md
