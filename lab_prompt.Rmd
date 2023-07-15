@@ -14,11 +14,19 @@ In 1958 Keeling began continuous monitoring of atmospheric carbon dioxide concen
 ```{r load packages, echo = FALSE, message = FALSE}
 install.packages("tidyverse")
 library(tsibble)
-library(latex2exp)
+library(latex2exp) 
+library(feasts)
 library(forecast)
-library(dplyr)
+library(tseries)
+library(lubridate)
+```
+
+```{r}
+library(ggplot2)
+```
 
 
+```{r load packages, echo = FALSE, message = FALSE}
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
 ```
@@ -137,6 +145,59 @@ forecast(arima_model, h=24*12)
 
 Generate predictions for when atmospheric CO2 is expected to be at [420 ppm](https://research.noaa.gov/article/ArtMID/587/ArticleID/2764/Coronavirus-response-barely-slows-rising-carbon-dioxide) and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?
 
+```{r}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
+
+forecast.1997 <- forecast(arima_model, h = 12 * 117, level = c(95))
+dates <- rownames(data.frame(forecast.1997))
+
+# When CO2 is expected to hit 420ppm
+prediction.420.lower <- first.date(forecast.1997$lower, 420)
+prediction.420.expected <- first.date(forecast.1997$mean, 420)
+prediction.420.upper <- first.date(forecast.1997$upper, 420)
+
+# When CO2 is expected to hit 500ppm
+prediction.500.lower <- first.date(forecast.1997$lower, 500)
+prediction.500.expected <- first.date(forecast.1997$mean, 500)
+prediction.500.upper <- first.date(forecast.1997$upper, 500)
+
+# Expected CO2 levels in the year 2100
+prediction.2100.index <- match("Jan 2100", dates)
+prediction.2100.lower <- forecast.1997$lower[prediction.2100.index]
+prediction.2100.expected <- forecast.1997$mean[prediction.2100.index]
+prediction.2100.upper <- forecast.1997$upper[prediction.2100.index]
+```
+
+
+```{r}
+forecast_df <- data.frame(
+  date = as.Date(seq(from = as.Date("1998-01-01"), by = "month", length.out = 12 * 117)),
+  CO2 = forecast.1997$mean,
+  lower = forecast.1997$lower,
+  upper = forecast.1997$upper
+)
+```
+
+
+```{r}
+# Generate plot
+ggplot(forecast_df, aes(x = date)) +
+  geom_ribbon(aes(ymin = X95., ymax = X95..1), fill = "grey80", alpha = 0.5) +
+  geom_line(aes(y = CO2), color = "darkblue") +
+  geom_hline(yintercept = 420, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 500, linetype = "dashed", color = "orange") +
+  labs(
+    x = "Year",
+    y = "CO2 Concentration (ppm)",
+    title = "Forecasted CO2 Concentration",
+    subtitle = "Red line: 420 ppm, Orange line: 500 ppm"
+  ) +
+  theme_minimal()
+```
+
 # Report from the Point of View of the Present 
 
 One of the very interesting features of Keeling and colleagues' research is that they were able to evaluate, and re-evaluate the data as new series of measurements were released. This permitted the evaluation of previous models' performance and a much more difficult question: If their models' predictions were "off" was this the result of a failure of the model, or a change in the system? 
@@ -151,15 +212,123 @@ The most current data is provided by the United States' National Oceanic and Atm
 
 Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
 
+```{r pull data from the global monitoring laboratory}
+co2_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_weekly_mlo.csv"
+co2_month_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+
+co2_present <- read.csv(co2_url, comment.char = "#") %>%
+  mutate(index = yearweek(lubridate::make_datetime(year, month, day))) %>%
+  mutate(average = ifelse(average == -999.99, NA, average)) %>%
+  fill(average) %>%
+  tsibble(index = index)
+co2_present_month <- read.csv(co2_month_url, comment.char = "#") %>%
+  mutate(index = yearmonth(lubridate::make_datetime(year, month))) %>%
+  tsibble(index = index)
+```
+
+
 Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report. 
+
+```{r}
+co2_present %>%
+  ggplot(aes(x = index, y = average)) +
+  geom_line() +
+  ggtitle("Weekly CO2 levels from start to present") +
+  xlab("Year") +
+  ylab("CO2 level")
+
+# Plot the monthly series
+co2_present_month %>%
+  ggplot(aes(x = index, y = average)) +
+  geom_line() +
+  ggtitle("Monthly CO2 levels from start to present") +
+  xlab("Year") +
+  ylab("CO2 level")
+
+
+# Decompose the time series to see trend, seasonality and residuals. The 'stl' function is used because 'decompose' won't work on 'tsibble' objects.
+# Decompose the weekly series
+co2_present_decomposed <- co2_present %>%
+  model(STL(average ~ season(window = "periodic"))) %>%
+  components()
+
+autoplot(co2_present_decomposed)
+
+# Decompose the monthly series
+co2_present_month_decomposed <- co2_present_month %>%
+  model(STL(average ~ season(window = "periodic"))) %>%
+  components()
+
+autoplot(co2_present_month_decomposed)
+co2_present_acf <- ACF(co2_present, average)
+autoplot(co2_present_acf)
+
+co2_present_pacf <- PACF(co2_present, average)
+autoplot(co2_present_pacf)
+
+co2_present_month_acf <- ACF(co2_present_month, average)
+autoplot(co2_present_month_acf)
+
+co2_present_month_pacf <- PACF(co2_present_month, average)
+autoplot(co2_present_month_pacf)
+
+
+```
 
 ## (1 point) Task 2b: Compare linear model forecasts against realized CO2
 
 Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) 
 
+```{r}
+data.1997 <- data.frame(index = 1:nrow(co2_ts), month = factor(month(co2_ts$index)), value = co2_ts$value)
+```
+
+```{r}
+# Generate newdata to predict on
+data.1997.max_month <- max(data.1997$index)
+data.future.max_month <- data.1997.max_month + (12 * (2023 - 1997))
+data.future <- data.frame(index = (data.1997.max_month + 1):data.future.max_month)
+
+# Create forecasts
+model.linear.forecast <- predict(model.linear, data.future, interval = "prediction", level = 0.99)
+model.linear.predicted <- cbind(data.future, model.linear.forecast) %>%
+  mutate(value = fit, index = yearmonth(seq(as.Date("1998/1/1"), as.Date("2023/12/1"), by = "month"))) %>%
+  select(value, index) %>%
+  head(-6) # remove the last 6 months
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present_month) +
+  geom_line(aes(x = index, y = value), color = 'steelblue', data = model.linear.predicted) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
 ## (1 point) Task 3b: Compare ARIMA models forecasts against realized CO2  
 
 Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present. 
+
+```{r}
+model.arima.predicted <- data.frame(forecast(model.arima, h = (12 * 25) + 6, level = c(0)))
+model.arima.predicted <- data.frame(
+  index = yearmonth(rownames(model.arima.predicted)),
+  average = model.arima.predicted$Point.Forecast
+)
+
+ggplot() +
+  geom_line(aes(x = index, y = average), color = 'steelblue', data = model.arima.predicted) +
+  geom_line(aes(x = index, y = average), color = 'black', data = co2_present_month) +
+  labs(
+    title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
+    subtitle = 'Forecasted levels in blue',
+    x = 'Month',
+    y = TeX(r'($CO_2$ parts per million)')
+  )
+```
+
 
 ## (3 points) Task 4b: Evaluate the performance of 1997 linear and ARIMA models 
 
@@ -167,9 +336,128 @@ In 1997 you made predictions about the first time that CO2 would cross 420 ppm. 
 
 After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.) 
 
+```{r}
+co2_monthly_avg <- co2_present %>%
+  mutate(month_year = paste(year, month, sep = "-")) %>%
+  group_by(month_year) %>%
+  summarise(avg_co2 = mean(average, na.rm = TRUE))
+
+co2_monthly_avg$month_year <- as.Date(paste(co2_monthly_avg$month_year, "01", sep = "-"))
+co2_monthly_avg_ts <- ts(co2_monthly_avg$avg_co2, start = c(1997, 1), frequency = 12)
+
+#Comparison of forecasted and actual values
+comparison <- data.frame(
+  date = time(co2_monthly_avg_ts),
+  actual = as.numeric(co2_monthly_avg_ts),
+  predicted = c(forecast.1997$mean, rep(NA, length(co2_monthly_avg_ts) - length(forecast.1997$mean)))
+)
+
+head(comparison)
+```
+
+
+```{r}
+#Error metrics
+comparison <- comparison %>%
+  mutate(error = actual - predicted,
+         MAE = abs(error),
+         RMSE = error^2)
+
+# Calculate overall MAE and RMSE
+MAE <- mean(comparison$MAE, na.rm = TRUE)
+RMSE <- sqrt(mean(comparison$RMSE, na.rm = TRUE))
+
+# 3. Formal test: Mincer-Zarnowitz regression
+comparison <- na.omit(comparison)
+MZ_reg <- lm(actual ~ predicted + 0, data = comparison)
+
+MAE
+RMSE
+MZ_reg
+```
+In this case, an MAE of 104.9443 means that our model, on average, makes an error of about 104.9443 units in its predictions. An RMSE of 112.3219 means that our model's predictions are, on average, approximately 112.3219 units away from the actual values.
+
+The linear regression is modeling the actual CO2 level as a function of the predicted CO2 level. The coefficient for the predicted variable is 0.762291. This means that for each unit increase in the predicted CO2 level, we would expect an average increase of about 0.76 units in the actual CO2 level. The p-value is extremely small (< 2.2e-16), meaning this effect is statistically significant. The R-squared is 0.9936, indicating that 99.36% of the variance in the actual CO2 levels is explained by the predicted levels, which is quite high.
+
+However, there are significant residuals, ranging from -47.105 to 55.018, with a median of 3.428. This suggests that while the predicted values explain much of the variance, they systematically under- or overestimate the actual CO2 levels by up to about 55 units.
+
+```{r}
+#Forecast performance: Diebold-Mariano test
+DM_test <- dm.test(comparison$actual, comparison$predicted, alternative = "two.sided")
+DM_test
+```
+The DM test is a procedure for comparing forecast accuracy. The null hypothesis is that the two methods (in this case, the actual and predicted values) have the same forecast accuracy.
+
+The DM statistic is -83.65 and the p-value is less than 2.2e-16. This extremely low p-value leads us to reject the null hypothesis, implying that there is a statistically significant difference between the forecast accuracy of the actual and predicted CO2 levels. Given that the DM statistic is negative, it indicates that the actual values have a higher forecast accuracy than the predicted values.
+
+https://eranraviv.com/volatility-forecast-evaluation-in-r/
+
+
+```{r}
+ggplot(data = comparison, aes(x = predicted, y = actual)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'red') +
+  labs(title = "Actual vs. Predicted CO2 Levels", x = "Predicted", y = "Actual") +
+  theme_minimal()
+
+```
+In summary, while the model does a good job of explaining the variance in actual CO2 levels (as indicated by the high R-squared value), there are significant differences between the actual and predicted values, suggesting that the model may be systematically under- or overestimating the actual levels. Additionally, the DM test suggests that the actual values have a higher forecast accuracy than the predicted values.
+
 ## (4 points) Task 5b: Train best models on present data
 
 Seasonally adjust the weekly NOAA data, and split both seasonally-adjusted (SA) and non-seasonally-adjusted (NSA) series into training and test sets, using the last two years of observations as the test sets. For both SA and NSA series, fit ARIMA models using all appropriate steps. Measure and discuss how your models perform in-sample and (psuedo-) out-of-sample, comparing candidate models and explaining your choice. In addition, fit a polynomial time-trend model to the seasonally-adjusted series and compare its performance to that of your ARIMA model.
+
+```{r}
+co2_ts <- ts(co2_present$average, frequency = 52)
+
+# Determine the seasonal component 
+co2_stl <- stl(co2_ts, s.window = "periodic")
+
+# Seasonal adjustment
+co2_present_sa <- data.frame(
+  Date = co2_present$Date,
+  average_sa = co2_stl$time.series[, "seasonal"]
+)
+```
+
+
+```{r}
+train_sa <- co2_present_sa %>% filter(Date < as.Date("2021-01-01"))
+test_sa <- co2_present_sa %>% filter(Date >= as.Date("2021-01-01"))
+
+train_nsa <- co2_present %>% filter(Date < as.Date("2021-01-01"))
+test_nsa <- co2_present %>% filter(Date >= as.Date("2021-01-01"))
+```
+
+
+```{r}
+model_sa <- auto.arima(train_sa$average_sa)
+model_nsa <- auto.arima(train_nsa$average)
+```
+
+```{r}
+summary(model_sa)
+```
+
+
+```{r}
+summary(model_nsa)
+```
+```{r}
+pred_sa <- forecast(model_sa, h = length(test_sa$average_sa))
+pred_nsa <- forecast(model_nsa, h = length(test_nsa$average))
+```
+
+## TO:DO - Compare Models (SA & NSA) and analyze error metrics
+
+```{r}
+train_sa$Date <- as.numeric(train_sa$Date)
+test_sa$Date <- as.numeric(test_sa$Date)
+
+model_poly <- lm(average_sa ~ poly(Date, 4), data = train_sa)
+poly_pred <- predict(model_poly, newdata = test_sa)
+summary(model_poly)
+```
 
 ## (3 points) Task Part 6b: How bad could it get?
 
