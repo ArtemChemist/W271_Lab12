@@ -235,15 +235,12 @@ model.wmonth.predicted <- cbind.data.frame(polynomdate , model.wmonth.forecast)
 \autoref{fig:frcst} (green trace) demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliably follow the pattern of the historical data.
 
 ## ARIMA times series model
-
-\textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
-
-```{r Split into test and train, warning=FALSE}
+```{r Deseason the data, warning=FALSE}
 my_lag <- 12
 co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
-co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
 co2_ts <- slice(co2_ts, my_lag + 2:nrow(co2_ts))
 ```
+Given presence of strong trends and seasonality, we start with de-seasoning of the data by differencing with lag `r my_lag`. Using this data we conduct a grid search of the ARIMA model parameters, using BIC criterion to select the best model. The search yields ARIMA(1.1.1) as the preferred model for de-seasoned data. Using this model as a starting point, we fit a few SARIMA models to the original time series before de-seasoning. At this point we only varied parameters in the range PDQ (0.0.0) to PDQ(2.2.2) and selected the model with the least BIC
 
 ```{r Explore model space}
 # Generate a set of models AR(1)-AR(10) and MA(1)-MA(10)
@@ -257,19 +254,17 @@ model.bic <- co2_ts %>%
   ))
 
 # Report the winning model parameters
-# model.bic %>% report()
+model.bic %>% report()
 ```
 
 ```{r Make final model}
-hist_arima <- arima(co2_ts$value,
-  order = c(1, 1, 1),
-  seasonal = list(order = c(0, 1, 1), period = 12)
-)
-summary(hist_arima)
-```
+lin_arima <- arima(co2_ts$value, order = c(1, 1, 1),
+  seasonal = list(order = c(0, 1, 1), period = 12))
 
-```{r calculate BIC}
+best_arima <- arima(co2_ts$value, order = c(1, 2, 1),
+  seasonal = list(order = c(0, 1, 1), period = 12))
 
+# Helper function to calculate BIC for a fitted model
 find_bic <- function(arima_model, ts ){
 log_likelihood <- logLik(arima_model) #Get log-likelihood
 p <- length(arima_model$coef) # Get the number of parameters
@@ -278,31 +273,29 @@ bic <- -2 * log_likelihood + p * log(n) # Calculate BIC
 print(bic) # Print the BIC value
 }
 
-best_bic <- find_bic(hist_arima, co2_ts$value)
+lin_bic <- find_bic(lin_arima, co2_ts$value)
+best_bic <- find_bic(best_arima, co2_ts$value)
+
+summary(best_arima)
 ```
 
-```{r auto.arima}
-# model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
-# model.arima
-# find_bic(model.arima, co2)
-```
+
 
 ```{r forecast to 2022, echo=TRUE}
-frcst_2022 <- forecast(hist_arima, h=frcst_length)
+frcst_best <- forecast(best_arima, h=frcst_length)
 ```
 
 
 ```{r forecast plotting, results='hide'}
-df_toPlot <- cbind.data.frame(polynomdate, frcst_2022$mean, frcst_2022$lower, frcst_2022$upper)
-df_toPlot$week <- yearweek(df_toPlot$polynomdate)
+df_frcst <- cbind.data.frame(polynomdate, frcst_best$mean, frcst_best$lower, frcst_best$upper)
 
-df_toPlot <- df_toPlot[c(1,2,4,6)]
-names(df_toPlot) <- c("my_date", "mean", "lower", "upper")
+df_frcst  <- df_frcst[c(1,2,4,6)]
+names(df_frcst) <- c("my_date", "mean", "lower", "upper")
 
 forecast_plot <- ggplot() + 
   geom_line(aes(x = my_date, y = value), color = 'black', data = co2_df) +
-  geom_line(aes(x = my_date, y = mean), color = "red", data = df_toPlot) + 
-  geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill="yellow", alpha=0.35, data = df_toPlot)+
+  geom_line(aes(x = my_date, y = mean), color = "red", data = df_frcst) + 
+  geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill="yellow", alpha=0.35, data = df_frcst)+
   geom_ribbon(aes(x = polynomdate, ymin = lwr, ymax = upr), fill = "green", alpha = 0.65, data = model.wmonth.predicted) +
   geom_line(aes(x = polynomdate, y = fit), color = 'darkgreen', data = model.wmonth.predicted) +
   geom_hline(yintercept = 420, linetype='dotted', col = 'blue', size = 1) +  
@@ -312,7 +305,7 @@ forecast_plot <- ggplot() +
     subtitle = 'Forecasted levels (with 95% CI) in yellow',
     x = '',
     y = TeX(r'($CO_2$ parts per million)')
-  ) + xlim (as.Date("1990-01-01"), as.Date("2122-01-01")) + ylim(350, 700)
+  ) + xlim (as.Date("1990-01-01"), as.Date("2100-01-01")) + ylim(350, 700)
 
 ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
 ```
@@ -331,26 +324,24 @@ ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device 
 ```{r forecast rising CO2 levels}
 # Return the date that the given series first hit x num
 first.date <- function(series, num) {
-  return(dates[which(series > num)[1]])
+  return(df_frcst$my_date[which(series > num)[1]])
 }
 
-dates <- df_toPlot$my_date
-
 # When CO2 is expected to hit 420ppm
-first_time.420 <- first.date(df_toPlot$upper, 420)
-expected.420 <- first.date(df_toPlot$mean, 420)
-last_time.420 <- first.date(df_toPlot$lower, 420)
+first_time.420 <- first.date(df_frcst$upper, 420)
+expected.420 <- first.date(df_frcst$mean, 420)
+last_time.420 <- first.date(df_frcst$lower, 420)
 
 # When CO2 is expected to hit 500ppm
-first_time.500 <- first.date(df_toPlot$upper, 500)
-expected.500 <- first.date(df_toPlot$mean, 500)
-last_time.500 <- first.date(df_toPlot$lower, 500)
+first_time.500 <- first.date(df_frcst$upper, 500)
+expected.500 <- first.date(df_frcst$mean, 500)
+last_time.500 <- first.date(df_frcst$lower, 500)
 
 # Expected CO2 levels in the year 2100
-prediction.2100.index <- match("2100-01-01", dates)
-prediction.2100.lower <- df_toPlot$lower[prediction.2100.index]
-prediction.2100.expected <- df_toPlot$mean[prediction.2100.index]
-prediction.2100.upper <- df_toPlot$upper[prediction.2100.index]
+prediction.2100.index <- match("2100-01-01", df_frcst$my_date)
+prediction.2100.lower <- df_frcst$lower[prediction.2100.index]
+prediction.2100.expected <- df_frcst$mean[prediction.2100.index]
+prediction.2100.upper <- df_frcst$upper[prediction.2100.index]
 ```
 
 #### When CO2 is expected to hit 420ppm and 500ppm
@@ -374,5 +365,11 @@ prediction.2100.upper <- df_toPlot$upper[prediction.2100.index]
 
 \appendix
 \section{Appendix: Model Robustness}
+
+```{r auto.arima}
+# model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+# model.arima
+# find_bic(model.arima, co2)
+```
 
 \textcolor{red}{While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. }
