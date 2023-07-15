@@ -219,7 +219,7 @@ dev.off()
 
 ```{r forecasting using the wmonth model}
 data.1997.max_month <- max(co2_df$index)
-frcst_length <- 12 * (2022 - 1997)
+frcst_length <- 12 * (2122 - 1997)
 data.future.max_month <- data.1997.max_month + frcst_length
 
 # Make df with the future dates and month for forecast
@@ -265,7 +265,7 @@ hist_arima <- arima(co2_ts$value,
   order = c(1, 1, 1),
   seasonal = list(order = c(0, 1, 1), period = 12)
 )
-hist_arima
+summary(hist_arima)
 ```
 
 ```{r calculate BIC}
@@ -278,12 +278,12 @@ bic <- -2 * log_likelihood + p * log(n) # Calculate BIC
 print(bic) # Print the BIC value
 }
 
-find_bic(hist_arima, co2_ts$value)
+best_bic <- find_bic(hist_arima, co2_ts$value)
 ```
 
 ```{r auto.arima}
-model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
-model.arima
+# model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+# model.arima
 # find_bic(model.arima, co2)
 ```
 
@@ -296,8 +296,6 @@ frcst_2022 <- forecast(hist_arima, h=frcst_length)
 df_toPlot <- cbind.data.frame(polynomdate, frcst_2022$mean, frcst_2022$lower, frcst_2022$upper)
 df_toPlot$week <- yearweek(df_toPlot$polynomdate)
 
-# model.wmonth.predicted 
-
 df_toPlot <- df_toPlot[c(1,2,4,6)]
 names(df_toPlot) <- c("my_date", "mean", "lower", "upper")
 
@@ -307,12 +305,14 @@ forecast_plot <- ggplot() +
   geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill="yellow", alpha=0.35, data = df_toPlot)+
   geom_ribbon(aes(x = polynomdate, ymin = lwr, ymax = upr), fill = "green", alpha = 0.65, data = model.wmonth.predicted) +
   geom_line(aes(x = polynomdate, y = fit), color = 'darkgreen', data = model.wmonth.predicted) +
+  geom_hline(yintercept = 420, linetype='dotted', col = 'blue', size = 1) +  
+  geom_hline(yintercept = 500, linetype='dotted', col = 'blue', size = 1)
   labs(
     title = TeX(r'(Monthly Mean $CO_2$ with Forecasted Values)'),
     subtitle = 'Forecasted levels (with 95% CI) in yellow',
     x = '',
     y = TeX(r'($CO_2$ parts per million)')
-  )
+  ) + xlim (as.Date("1990-01-01"), as.Date("2122-01-01")) + ylim(350, 700)
 
 ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
 ```
@@ -328,8 +328,43 @@ ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device 
 
 ## Forecast atmospheric $CO_{2}$ growth
 
-\textcolor{red}{Generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2100. How confident are you that these will be accurate predictions?}
+```{r forecast rising CO2 levels}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(dates[which(series > num)[1]])
+}
 
+dates <- df_toPlot$my_date
+
+# When CO2 is expected to hit 420ppm
+first_time.420 <- first.date(df_toPlot$upper, 420)
+expected.420 <- first.date(df_toPlot$mean, 420)
+last_time.420 <- first.date(df_toPlot$lower, 420)
+
+# When CO2 is expected to hit 500ppm
+first_time.500 <- first.date(df_toPlot$upper, 500)
+expected.500 <- first.date(df_toPlot$mean, 500)
+last_time.500 <- first.date(df_toPlot$lower, 500)
+
+# Expected CO2 levels in the year 2100
+prediction.2100.index <- match("2100-01-01", dates)
+prediction.2100.lower <- df_toPlot$lower[prediction.2100.index]
+prediction.2100.expected <- df_toPlot$mean[prediction.2100.index]
+prediction.2100.upper <- df_toPlot$upper[prediction.2100.index]
+```
+
+#### When CO2 is expected to hit 420ppm and 500ppm
+
+| PPM    | For the first time | Expected         | Last time         |
+|--------|--------------------|------------------|-------------------|
+| 420    | `r first_time.420` | `r expected.420` | `r last_time.420` |
+| 500    | `r first_time.500` | `r expected.500` | `r last_time.500` |
+
+#### Expected CO2 levels in the year 2100
+
+| Best Case Scenario                  | Expected                               | Worst Case Scenario                 |
+|-------------------------------------|----------------------------------------|-------------------------------------|
+| `r round(prediction.2100.lower, 1)` | `r round(prediction.2100.expected, 1)` | `r round(prediction.2100.upper, 1)` |
 # Conclusions 
 
 \textcolor{red}{In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasobnable assumption, our model predicts a grim future for the global climate. }
