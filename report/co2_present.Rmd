@@ -34,6 +34,7 @@ library(lubridate)
 library(feasts)
 library(forecast)
 library(sandwich)
+library(stargazer)
 if (!"fable" %in% rownames(installed.packages())) {
   install.packages("fable")
 }
@@ -103,7 +104,7 @@ co2_present_df <- co2_present_df %>%
 ## Recent Trends in Atmospheric Carbon 
 \textcolor{red}{Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report.}
 
-Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
+Atmospheric carbon is plotted in \autoref{fig:OldModels}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
 
 ```{r read objects from 1997 report}
 co2_df <- readRDS("co2_df.df")
@@ -144,10 +145,7 @@ ggsave(filename = "./figures/plot2_ts.png", plot = ts_and_forecast, device = "pn
 
 \begin{figure}[ht]
   \includegraphics[width=.8\linewidth]{./figures/plot2_ts.png}
-  \caption{Recent trend in $CO_2$ concentration\label{fig:OldModels}}
-  \begin{figurenotes}
-    $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with strong seasonal oscillations. These patterns points to the need of de-seasoning and de-trending before further analysis.
-  \end{figurenotes}
+  \caption{Recent trend in [$CO_2$] and models trained on pre-1997 data\label{fig:OldModels}}
 \end{figure} 
 
 ```{r EDA plots with de-trending}
@@ -200,16 +198,100 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 
 
 # Models and Forecasts 
-\textcolor{red}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
+In this section we will evaluate performance of historic models and generate new models based on the most recent data. 
 
 ## 1997 Models vs realized data 
 \autoref{fig:OldModels} demonstrates the recent trends in [$CO_{2}$] along with the models fitted on the data prior to 1997. It is clear that ever accelerating trend continues, with no noticeable slow down or even reduced acceleration. Clearly, accuracy of predictions from the linear model does not justify even electricity spent on fitting this model. The trend is accelerating and linear model grossly underestimates the real concentration. Remarkably, simple quadratic model augmented with months as categories is extremely accurate, capturing both accelerating trend and seasonal variability 25 years into the future! Our best ARIMA model underestimates real observations only slightly and its performance is still unexpetedly good for predictions that far out. Worth noticing that both seasonal models perform extremely well up until approximately 2016, when the real trend seemed to have had an additional boost. At then time ARIMA model started falling behind at an increased rate. That might be a statistical fluke, or might indicate the change in the $CO_{2}$ emissions. 
 
 ## Performance of 1997 linear and ARIMA models 
+```{r read predictions from previous report}
+mydat <- readRDS("predictions.num")
+first_time.420 <- mydat[1]
+expected.420 <- mydat[2]
+last_time.420 <- mydat[3]
+first_time.500 <- mydat[4]
+expected.500 <- mydat[5]
+last_time.500 <- mydat[6]
+prediction.2100.lower <- mydat[7]
+prediction.2100.expected <- mydat[81]
+prediction.2100.upper <- mydat[9]
+```
+It appears that the first time [$CO_{2}$] exceeded 420ppm was in Feb 2023 and the last time it was that low was in Mar 2023. It is unlikely it will return to this value any time soon. That correlates surprisingly well with out 25 year-old prediction that it will reach this threshold on `r expected.420`. As predicted, we are still far away from crossing 500 ppm threshold. 
 
-\textcolor{red}{In 1997 you made predictions about the first time that CO2 would cross 420 ppm. How close were your models to the truth?}
+```{r}
+co2_monthly_avg <- co2_present_df %>%
+  mutate(month_year = yearmonth(my_date)) %>%
+  group_by(month_year) %>%
+  summarise(avg_co2 = mean(ppm, na.rm = TRUE))
 
-\textcolor{red}{After reflecting on your performance on this threshold-prediction task, continue to use the weekly data to generate a month-average series from 1997 to the present, and compare the overall forecasting performance of your models from Parts 2a and 3b over the entire period. (You should conduct formal tests for this task.)}
+co2_monthly_avg <-  co2_monthly_avg %>%
+  mutate(my_date = make_datetime(year = year(month_year), month = month(month_year), day = 01))
+
+index_of_1998_pred <- match("1998-01-01", df_frcst$my_date)
+index_of_today_pred <- match("2023-01-01", df_frcst$my_date)
+index_of_1998_real <- match("1998-01-01", co2_monthly_avg$my_date)
+index_of_today_real <- match("2023-01-01", co2_monthly_avg$my_date)
+
+#Comparison of forecasted and actual values
+comparison <- data.frame(
+  date = df_frcst[index_of_1998_pred:index_of_today_pred,1],
+  actual = co2_monthly_avg[index_of_1998_real:index_of_today_real,2],
+  predicted = df_frcst[index_of_1998_pred:index_of_today_pred,2]
+)
+names(comparison) <- c("date", "actual", "predicted")
+```
+
+
+```{r}
+#Error metrics
+comparison <- comparison %>%
+  mutate(sqerr = (actual - predicted)^2)
+
+# Calculate overall RMSE
+RMSE <- sqrt(mean(comparison$sqerr, na.rm = TRUE))
+
+# 3. Formal test: Mincer-Zarnowitz regression
+# First, shift both predicted and actual values by 360 
+# This is to avoid calculating intercept too far from the actual data
+comparison <- comparison %>% mutate(pred_md = predicted-365, act_md = actual-365)
+MZ_reg <- lm(act_md ~ pred_md, data = comparison)
+
+n_d <- data.frame(pred_md = comparison$pred_md)
+comparison <- comparison %>% mutate(modeled = predict(MZ_reg, newdata =n_d),
+                                  resid = MZ_reg$residuals)
+
+# Run t-test
+df <- df.residual(MZ_reg) # Calculate the degrees of freedom
+intercept <- coef(MZ_reg)[1] # Get value for intercept
+slope <- coef(MZ_reg)[2]-1 # Get value for slope, adjusted by 1
+
+se_intercept <- sqrt(vcov(MZ_reg)[1, 1])  # Standard error of the intercept
+t_stat_inter <- intercept / se_intercept # t-statistic of the intercept
+
+se_slope <- sqrt(vcov(MZ_reg)[2, 2])  # Standard error of the intercept
+t_stat_slope <- slope / se_slope # t-statistic of the intercept
+
+# p-value for intercept
+p_value_intercept <- 2 * pt(abs(t_stat_inter), df = df, lower.tail = FALSE)
+
+# p-value for slope
+p_value_slope <- 2 * pt(abs(t_stat_slope), df = df, lower.tail = FALSE)
+```
+\begin{wrapfigure}[14]{r}{0.5\textwidth}
+    \centering
+    \vspace{-\normalbaselineskip}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_MZreg.png}
+     \caption{Mincer-Zarnowitz regression for 1997 ARIMA model\label{fig:MZreg}}
+\end{wrapfigure} 
+In this case, an RMSE of `r round(RMSE, digits = 1)` means that our model, on average, makes an error of about `r round(RMSE, digits = 1)`ppm in its predictions. \hfill\break\indent We use Mincer-Zarnowitz regression to quantify predictive power of our model. To avoid extrapolation too far from the data, we shift both predicted and actual data by 365 ppm. Intercept of this regression is `r round(MZ_reg$coefficients[1], digits=1)` and  slope is `r round(MZ_reg$coefficients[2], digits=3)`. Given how close these parameters are to 0 and 1, we conclude that our ARIMA model has high predictive power. However, t-test rejects hypothesis that they are equal to 0 and 1 with p-values of `r p_value_intercept`  and `r p_value_slope` respectively. This is likely due to the high number of data points, that makes small deviations highly significant. 
+
+```{r plot MZ regression}
+plot_MZreg <- comparison %>% ggplot() + 
+  aes(x = pred_md, y = act_md) +
+  geom_point(color = "darkgray", size = 0.7) + 
+  geom_line(aes(x = pred_md, y = modeled ))
+ggsave(filename = "./figures/plot2_MZreg.png", plot = plot_MZreg, device = "png", units = c("in"), height = 4, width = 4)
+```
 
 ## Best models on present data
 

@@ -415,6 +415,11 @@ prediction.2100.index <- match("2100-01-01", df_frcst$my_date)
 prediction.2100.lower <- df_frcst$lower[prediction.2100.index]
 prediction.2100.expected <- df_frcst$mean[prediction.2100.index]
 prediction.2100.upper <- df_frcst$upper[prediction.2100.index]
+
+saveRDS(c(first_time.420, expected.420, last_time.420,
+          first_time.500, expected.500, last_time.500,
+          prediction.2100.lower, prediction.2100.expected, prediction.2100.upper),
+          file = "predictions.num")
 ```
 \begin{wraptable}[6]{r}{0.6\textwidth}
   \setlength{\belowcaptionskip}{-15pt}
