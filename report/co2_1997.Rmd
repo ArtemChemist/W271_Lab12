@@ -86,15 +86,15 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
   \centering
   \begin{subfigure}[t]{0.6\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/datamodels.png}
-    \caption{Historic trend [$CO_2$] and its models\label{fig:carbon}}
+    \caption{Historic trend and the models.\label{fig:carbon}}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.35\textwidth}
     \includegraphics[width=\textwidth]{./figures/plot_decomposition.png}
-    \caption{Decomposition of the [$CO_2$] time series\label{fig:decomp}}
+    \caption{Series decomposition.\label{fig:decomp}}
   \end{subfigure}
   \setlength{\belowcaptionskip}{-30pt}
-  \caption{Monthly mean [$CO_2$] and its models\label{fig:mainplot}}
+  \caption{Monthly mean [$CO_2$] time series and its models.\label{fig:mainplot}}
 \end{figure}
 # Exploratory analysis of historical trends in atmospheric $CO_{2}$
 
@@ -107,7 +107,7 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
 \par
 
 # Models and Forecasts 
-\textcolor{blue}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
+To gain insight into the driving forces behind observed data it is often useful to generate a model of the process. In this section, we discuss simple polynomial as well as more advances SARIMA models of the [$CO_{2}$] trend.
 
 ## Linear and Polynomial models 
 \begin{equation}
@@ -129,8 +129,6 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
   \setlength{\belowcaptionskip}{-20pt}
   \caption{Diagnostic plots for residuals of polynomial models\label{fig:residplot}}
 \end{figure}
-
-
 
 ```{r estimate a linear model, results='hide', warning=FALSE}
 model_lin <- lm(formula = value ~ index, data = co2_df)
@@ -189,7 +187,7 @@ ggplot() + aes(x = my_date, y = value) +
   geom_line(aes(y = fitted(model.quad), color = "Quadratic model"), size = 0.75) +
   geom_line(aes(y = fitted(model_lin), color = "Linear model"), size = 0.75) +
   geom_point(aes(color = "Observed data"), size = 0.5) +
-  labs(x = '', y = TeX(r'(\[$CO_2$\], parts per million)')) +
+  labs(x = '', y = TeX(r'(\[$CO_2$\], ppm)')) +
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20), 
         axis.title.x=element_text(size=20),
@@ -199,12 +197,15 @@ ggplot() + aes(x = my_date, y = value) +
                                            "Linear model" = "blue",
                                            "Quadratic model" = "green", 
                                            "Quadratic model + month" = "red" ))+
+  # Legend text and position
+  theme(legend.position=c(.3,.85),
+        legend.text=element_text(size=14)) +
+  # Panel and axis appearance
   theme(axis.line = element_line(colour = "black"),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
-    panel.background = element_blank(),
-    legend.position=c(.25,.85)) 
+    panel.background = element_blank()) 
 
 
 ggsave(filename = './figures/datamodels.png', plot = quad_plot, device = "png", units = c("in"), height= 3, width=6)
@@ -235,13 +236,23 @@ model.wmonth.predicted <- cbind.data.frame(polynomdate , model.wmonth.forecast)
 \autoref{fig:frcst} (green trace) demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliably follow the pattern of the historical data.
 
 ## ARIMA times series model
-
-\textcolor{red}{Following all appropriate steps, choose an ARIMA model to fit to the series. Discuss the characteristics of your model and how you selected between alternative ARIMA specifications. Use your model (or models) to generate forecasts to the year 2022. }
-
-```{r Split into test and train, warning=FALSE}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.63\textwidth}
+    \centering\includegraphics[width=\textwidth]{./figures/plot1_2frcst.png}
+    \caption{[$CO_{2}$] forecast with linear and non-linear models\label{fig:2frcst}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.33\textwidth}
+    \centering\includegraphics[width=\textwidth]{./figures/best_arima_resid.png}
+    \caption{Model residuals\label{fig:best_resid}}
+  \end{subfigure}
+  \setlength{\belowcaptionskip}{-20pt}
+  \caption{Diagnostic plots for the selected ARIMA(1.2.1)(0.1.1)[12] model\label{fig:arimaresidplot}}
+\end{figure}
+```{r Deseason the data, warning=FALSE}
 my_lag <- 12
 co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
-co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
 co2_ts <- slice(co2_ts, my_lag + 2:nrow(co2_ts))
 ```
 
@@ -260,16 +271,14 @@ model.bic <- co2_ts %>%
 # model.bic %>% report()
 ```
 
-```{r Make final model}
-hist_arima <- arima(co2_ts$value,
-  order = c(1, 1, 1),
-  seasonal = list(order = c(0, 1, 1), period = 12)
-)
-summary(hist_arima)
-```
+```{r Make final model, results='hide'}
+lin_arima <- arima(co2_ts$value, order = c(1, 1, 1),
+  seasonal = list(order = c(0, 1, 1), period = 12))
 
-```{r calculate BIC}
+best_arima <- arima(co2_ts$value, order = c(1, 2, 1),
+  seasonal = list(order = c(0, 1, 1), period = 12))
 
+# Helper function to calculate BIC for a fitted model
 find_bic <- function(arima_model, ts ){
 log_likelihood <- logLik(arima_model) #Get log-likelihood
 p <- length(arima_model$coef) # Get the number of parameters
@@ -278,31 +287,69 @@ bic <- -2 * log_likelihood + p * log(n) # Calculate BIC
 print(bic) # Print the BIC value
 }
 
-best_bic <- find_bic(hist_arima, co2_ts$value)
+lin_bic <- find_bic(lin_arima, co2_ts$value)
+best_bic <- find_bic(best_arima, co2_ts$value)
+
+# summary(best_arima)
+```
+We start with de-seasoning of the data by differencing with lag `r my_lag`. We then conduct a grid search of ARIMA models, selecting model with the lowest BIC. The search yields $ARIMA(1.1.1)$ as the preferred model for de-seasoned data. We then fit a few SARIMA models to the original time series, only changing parameters in the range PDQ(0.0.0) to PDQ(2.2.2), agina choosing the model with the lowest BIC. This way we arrived at $SARIMA(1.1.1)(0.1.1)_{12}$ that has BIC of `r round( lin_bic, digits = 1)`. However, this model fails to capture non-linearity that we discovered in the analysis of polynomial models. \autoref{fig:2frcst} shows that its predictions continue into the future almost linearly. To remedy this issue, we introduced additional differencing, hoping that double-differencing would eliminate growth acceleration, similar to how second derivative of distance over time removes acceleration. \hfill\break\indent
+Following this line of thought we selected $SARIMA(1.2.1)(0.1.1)_{12}$ as our final model. This update increased BIC to `r round(best_bic, digits = 1)`, which we consider a reasonable sacrifice to capture non-linearity. \autoref{fig:best_resid} shows that ACF of the residuals does not have significant values and residuals are close to normally distributed, indicating reasonable quality of the model.
+
+```{r forecast using two models, echo=TRUE}
+frcst_best <- forecast(best_arima, h=frcst_length)
+frcst_lin <- forecast(lin_arima, h=frcst_length)
 ```
 
-```{r auto.arima}
-# model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
-# model.arima
-# find_bic(model.arima, co2)
+```{r residuals best model, results='hide'}
+png(file = './figures/best_arima_resid.png', height=6, width=5, units = c("in"), res = 600)
+checkresiduals(best_arima, test=FALSE, plot = TRUE)
+dev.off()
 ```
 
-```{r forecast to 2022, echo=TRUE}
-frcst_2022 <- forecast(hist_arima, h=frcst_length)
-```
+```{r Double-diff explanation}
+df_2frcst <- cbind.data.frame(polynomdate, frcst_lin$mean, frcst_best$mean )
+names(df_2frcst) <- c("my_date", "single_diff", "double_diff")
 
+forecast_2models_plot <- ggplot() + 
+  geom_line(aes(x = my_date, y = value, color = "Observed data"), data = co2_df) +
+  geom_line(aes(x = my_date, y = single_diff, color = "SARIMA(1.1.1)(0.1.1)"), size = 0.25, data = df_2frcst) + 
+  geom_line(aes(x = my_date, y = double_diff,  color = "SARIMA(1.2.1)(0.1.1)"), size = 0.25, data = df_2frcst) +
+  geom_line(aes(x = polynomdate, y = fit, color = "Quadratic model w month"), size = 0.25, data = model.wmonth.predicted) +
+  labs(x = '', y = TeX(r'(\[$CO_2$\], ppm)')) + 
+  xlim (as.Date("1960-01-01"), as.Date("2050-01-01")) + ylim(300, 500) +
+  # Legend colors
+  scale_color_manual(name = "", values = c("Observed data" = "black", 
+                                         "Quadratic model w month" = "darkgreen",
+                                         "SARIMA(1.1.1)(0.1.1)" = "orange",
+                                         "SARIMA(1.2.1)(0.1.1)" = "red" )) +
+  # Legend text and position
+  theme(legend.position=c(.25,.85),
+        legend.text=element_text(size=20)) +
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Lines
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank())
+
+ggsave(filename = "./figures/plot1_2frcst.png", plot = forecast_2models_plot, device = "png", units = c("in"), height = 6, width = 10)
+```
 
 ```{r forecast plotting, results='hide'}
-df_toPlot <- cbind.data.frame(polynomdate, frcst_2022$mean, frcst_2022$lower, frcst_2022$upper)
-df_toPlot$week <- yearweek(df_toPlot$polynomdate)
+df_frcst <- cbind.data.frame(polynomdate, frcst_best$mean, frcst_best$lower, frcst_best$upper)
 
-df_toPlot <- df_toPlot[c(1,2,4,6)]
-names(df_toPlot) <- c("my_date", "mean", "lower", "upper")
+df_frcst  <- df_frcst[c(1,2,4,6)]
+names(df_frcst) <- c("my_date", "mean", "lower", "upper")
 
 forecast_plot <- ggplot() + 
   geom_line(aes(x = my_date, y = value), color = 'black', data = co2_df) +
-  geom_line(aes(x = my_date, y = mean), color = "red", data = df_toPlot) + 
-  geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill="yellow", alpha=0.35, data = df_toPlot)+
+  geom_line(aes(x = my_date, y = mean), color = "red", data = df_frcst) + 
+  geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill="yellow", alpha=0.35, data = df_frcst)+
   geom_ribbon(aes(x = polynomdate, ymin = lwr, ymax = upr), fill = "green", alpha = 0.65, data = model.wmonth.predicted) +
   geom_line(aes(x = polynomdate, y = fit), color = 'darkgreen', data = model.wmonth.predicted) +
   geom_hline(yintercept = 420, linetype='dotted', col = 'blue', size = 1) +  
@@ -312,7 +359,7 @@ forecast_plot <- ggplot() +
     subtitle = 'Forecasted levels (with 95% CI) in yellow',
     x = '',
     y = TeX(r'($CO_2$ parts per million)')
-  ) + xlim (as.Date("1990-01-01"), as.Date("2122-01-01")) + ylim(350, 700)
+  ) + xlim (as.Date("1990-01-01"), as.Date("2100-01-01")) + ylim(350, 700)
 
 ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
 ```
@@ -331,26 +378,24 @@ ggsave(filename = "./figures/plot1_frcst2022.png", plot = forecast_plot, device 
 ```{r forecast rising CO2 levels}
 # Return the date that the given series first hit x num
 first.date <- function(series, num) {
-  return(dates[which(series > num)[1]])
+  return(df_frcst$my_date[which(series > num)[1]])
 }
 
-dates <- df_toPlot$my_date
-
 # When CO2 is expected to hit 420ppm
-first_time.420 <- first.date(df_toPlot$upper, 420)
-expected.420 <- first.date(df_toPlot$mean, 420)
-last_time.420 <- first.date(df_toPlot$lower, 420)
+first_time.420 <- first.date(df_frcst$upper, 420)
+expected.420 <- first.date(df_frcst$mean, 420)
+last_time.420 <- first.date(df_frcst$lower, 420)
 
 # When CO2 is expected to hit 500ppm
-first_time.500 <- first.date(df_toPlot$upper, 500)
-expected.500 <- first.date(df_toPlot$mean, 500)
-last_time.500 <- first.date(df_toPlot$lower, 500)
+first_time.500 <- first.date(df_frcst$upper, 500)
+expected.500 <- first.date(df_frcst$mean, 500)
+last_time.500 <- first.date(df_frcst$lower, 500)
 
 # Expected CO2 levels in the year 2100
-prediction.2100.index <- match("2100-01-01", dates)
-prediction.2100.lower <- df_toPlot$lower[prediction.2100.index]
-prediction.2100.expected <- df_toPlot$mean[prediction.2100.index]
-prediction.2100.upper <- df_toPlot$upper[prediction.2100.index]
+prediction.2100.index <- match("2100-01-01", df_frcst$my_date)
+prediction.2100.lower <- df_frcst$lower[prediction.2100.index]
+prediction.2100.expected <- df_frcst$mean[prediction.2100.index]
+prediction.2100.upper <- df_frcst$upper[prediction.2100.index]
 ```
 
 #### When CO2 is expected to hit 420ppm and 500ppm
@@ -366,13 +411,18 @@ prediction.2100.upper <- df_toPlot$upper[prediction.2100.index]
 |-------------------------------------|----------------------------------------|-------------------------------------|
 | `r round(prediction.2100.lower, 1)` | `r round(prediction.2100.expected, 1)` | `r round(prediction.2100.upper, 1)` |
 # Conclusions 
-
-\textcolor{red}{In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasobnable assumption, our model predicts a grim future for the global climate. }
+In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasonable assumption, our model predicts a grim future for the global climate.
 
 \bibliographystyle{aea}
 \bibliography{references}
 
 \appendix
 \section{Appendix: Model Robustness}
+
+```{r auto.arima}
+# model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+# model.arima
+# find_bic(model.arima, co2)
+```
 
 \textcolor{red}{While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. }
