@@ -65,7 +65,7 @@ if (!"car" %in% rownames(installed.packages())) {
 library(car)
 theme_set(theme_minimal())
 ```
-
+\renewcommand{\columnsep}{10pt}
 # Introduction
 
 This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a question that has received considerable attention in the recent year. At this time the data seem to show trend of increasing  levels year over year, raising concerns in the scientific community.  \hfill\break\indent It is therefore imperative that we determine if there is enough evidence that this recent rise is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.\hfill\break\indent This raise is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase leading to heat waves, drought and rising sea levels. Current 90% confidence estimate place CO2 level at 425-785 ppm for 1.5 °C increase in average Earth temperature as compared to pre-industrial levels.
@@ -86,25 +86,21 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
   \centering
   \begin{subfigure}[t]{0.6\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_datamodels.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{Historic trend and the models.\label{fig:carbon}}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.35\textwidth}
     \includegraphics[width=\textwidth]{./figures/plot1_decomposition.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{Series decomposition.\label{fig:decomp}}
   \end{subfigure}
   \setlength{\belowcaptionskip}{-30pt}
   \caption{Monthly mean [$CO_2$] time series and its models.\label{fig:mainplot}}
 \end{figure}
 # Exploratory analysis of historical trends in atmospheric $CO_{2}$
-
-\par
-\textcolor{red}{Description how, where and why the data is generated}
-\par
-\textcolor{red}{Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed}
-\par
+\textcolor{red}{Description how, where and why the data is generated.\hfill\break\indent  Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed\hfill\break\indent}
 \textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
-\par
 
 # Models and Forecasts 
 To gain insight into the driving forces behind observed data it is often useful to generate a model of the process. In this section, we discuss simple polynomial as well as more advances SARIMA models of the [$CO_{2}$] trend.
@@ -119,11 +115,13 @@ To gain insight into the driving forces behind observed data it is often useful 
   \centering
   \begin{subfigure}[t]{0.45\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_lin_mod_resid.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{Linear model\label{fig:lin_model_resid}}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.45\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_quad_mod_resid.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{Quadratic model\label{fig:quad_model_resid}}
   \end{subfigure}
   \setlength{\belowcaptionskip}{-20pt}
@@ -165,9 +163,9 @@ co2_decomp <- decompose(co2)
 co2_df <- cbind.data.frame(co2_df, co2_decomp$seasonal, co2_decomp$trend)
 names(co2_df) = c("index", "my_date", "month", "value", "seasonal", "trend")
 trend <- ggplot(data = co2_df) + aes(x = my_date, y = trend ) + geom_line() + 
-  scale_y_continuous(expand = c(0,0)) + labs(x = '')
+  scale_y_continuous(expand = c(0,0)) + labs(x = element_blank())
 seasonal <- ggplot(data = co2_df) + aes(x = my_date, y = seasonal ) + geom_line() + 
-  scale_y_continuous(expand = c(0,0)) + labs(x = '')
+  scale_y_continuous(expand = c(0,0)) + labs(x = element_blank())
 
 png(file = './figures/plot1_decomposition.png', height=3, width=3, units = c("in"), res = 600)
 trend/seasonal
@@ -187,7 +185,7 @@ ggplot() + aes(x = my_date, y = value) +
   geom_line(aes(y = fitted(model.quad), color = "Quadratic model"), size = 0.75) +
   geom_line(aes(y = fitted(model_lin), color = "Linear model"), size = 0.75) +
   geom_point(aes(color = "Observed data"), size = 0.5) +
-  labs(x = '', y = TeX(r'(\[$CO_2$\], ppm)')) +
+  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) +
   theme(axis.text.x=element_text(size=20), 
         axis.text.y=element_text(size=20), 
         axis.title.x=element_text(size=20),
@@ -239,11 +237,13 @@ model.wmonth.predicted <- cbind.data.frame(polynomdate , model.wmonth.forecast)
   \centering
   \begin{subfigure}[t]{0.63\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_2frcst.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{[$CO_{2}$] forecast with linear and non-linear models\label{fig:2frcst}}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.33\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_best_arima_resid.png}
+    \setlength{\belowcaptionskip}{-5pt}
     \caption{Model residuals\label{fig:best_resid}}
   \end{subfigure}
   \setlength{\belowcaptionskip}{-20pt}
@@ -314,7 +314,7 @@ forecast_2models_plot <- ggplot() +
   geom_line(aes(x = my_date, y = single_diff, color = "SARIMA(1.1.1)(0.1.1)"), size = 0.25, data = df_2frcst) + 
   geom_line(aes(x = my_date, y = double_diff,  color = "SARIMA(1.2.1)(0.1.1)"), size = 0.25, data = df_2frcst) +
   geom_line(aes(x = polynomdate, y = fit, color = "Quadratic model w month"), size = 0.25, data = model.wmonth.predicted) +
-  labs(x = '', y = TeX(r'(\[$CO_2$\], ppm)')) + 
+  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) + 
   xlim (as.Date("1960-01-01"), as.Date("2050-01-01")) + ylim(300, 500) +
   # Legend colors
   scale_color_manual(name = "", values = c("Observed data" = "black", 
@@ -354,7 +354,7 @@ forecast_plot <- ggplot() +
   geom_line(aes(x = polynomdate, y = fit, color = "Quadratic model w month"), data = model.wmonth.predicted) +
   geom_hline(yintercept = 420, linetype='dashed', col = 'blue', size = 1) +  
   geom_hline(yintercept = 500, linetype='dashed', col = 'blue', size = 1) +
-  labs(x = '', y = TeX(r'(\[$CO_2$\], ppm)')) + 
+  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) + 
   xlim (as.Date("1990-01-01"), as.Date("2050-01-01")) + ylim(350, 600) +
 
   scale_color_manual(name = "", values = c("Observed data" = "black", 
@@ -405,19 +405,21 @@ prediction.2100.lower <- df_frcst$lower[prediction.2100.index]
 prediction.2100.expected <- df_frcst$mean[prediction.2100.index]
 prediction.2100.upper <- df_frcst$upper[prediction.2100.index]
 ```
+\begin{wraptable}[6]{r}{0.6\textwidth}
+  \setlength{\belowcaptionskip}{-15pt}
+  \caption{[$CO_{2}$] thresholds crossing}\label{wrap-tab:tab}
+  \begin{tabular}{llll}
+    \toprule 
+    ppm & As early as & Expected & Last time \\
+    \hline
+    420 & `r first_time.420` & `r expected.420` & `r last_time.420` \\
+    500 & `r first_time.500` & `r expected.500` & `r last_time.500`  \\
+    \bottomrule
+  \end{tabular}
+\end{wraptable}
 
-#### When CO2 is expected to hit 420ppm and 500ppm
+Based on the chosen model we can attempt to predict some important milestones. For the year 2100 we expect $[CO_{2}]$ to be `r round(prediction.2100.expected, 0)`ppm  with 95% CI from `r round(prediction.2100.lower, 0)`ppm to `r round(prediction.2100.upper, 0)`ppm. \autoref{wrap-tab:tab} summarizes when 420 ppm and 500 ppm thresholds might be crossed. Fast-increasing uncertainty in predictions, typical for SARIMA models, limits our ability to make meaningful predictions about distant future. For instance, despite fast growing trend, the model can not exclude possibility that atmospheric $CO_{2}$ will never exceed 420 and 500 ppm thresholds. Horizontal lines on \autoref{fig:frcst} show these thresholds. It is evident from the picture that the lower boundary of 95% confidence interval for prediction levels out at approx 400 ppm and might never exceed 420 ppm.
 
-| PPM    | For the first time | Expected         | Last time         |
-|--------|--------------------|------------------|-------------------|
-| 420    | `r first_time.420` | `r expected.420` | `r last_time.420` |
-| 500    | `r first_time.500` | `r expected.500` | `r last_time.500` |
-
-#### Expected CO2 levels in the year 2100
-
-| Best Case Scenario                  | Expected                               | Worst Case Scenario                 |
-|-------------------------------------|----------------------------------------|-------------------------------------|
-| `r round(prediction.2100.lower, 1)` | `r round(prediction.2100.expected, 1)` | `r round(prediction.2100.upper, 1)` |
 # Conclusions 
 In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasonable assumption, our model predicts a grim future for the global climate.
 
