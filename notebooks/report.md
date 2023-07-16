@@ -502,7 +502,7 @@ checkresiduals(model.nonseasonal)
     ##  Ljung-Box test
     ## 
     ## data:  Residuals from ARIMA(2,1,2) with drift
-    ## Q* = 560.47, df = 100, p-value < 2.2e-16
+    ## Q* = 560.46, df = 100, p-value < 2.2e-16
     ## 
     ## Model df: 4.   Total lags used: 104
 

@@ -1,37 +1,17 @@
 ---
-title: "Global $CO_{2}$ Emissions in 1997"
+title: "Global $CO_{2}$ Emissions in 2023 and beyond"
 short: "What Keeling missed all these years"
 journal: "AER" # AER, AEJ, PP, JEL
 month: "`r format(Sys.Date(), '%m')`"
 year: "`r format(Sys.Date(), '%Y')`"
+author: ""
 vol: 0
 issue: 0
-keywords:
-  - Replication
-  - Modern Science
-author:
-  - name: Majid Maki-Nayeri
-    firstname: Maki-Nayeri
-    surname: Maki-Nayeri
-    email: m_maki@ischool.berkeley.edu
-    affiliation: UC Berkeley, School of Information
-  - name: Vinod Bakthavachalam
-    firstname: Vinod
-    surname: Bakthavachalam
-    email: vinodb@ischool.berkeley.edu
-    affiliation: UC Berkeley, School of Information
-  - name: Artem Lebedev
-    firstname: Artem 
-    surname: Lebedev
-    email: artem.lebedev@berkeley.edu
-    affiliation: McMaster University, Department of Chemistry and Biochemistry
-acknowledgements: | 
-  The authors would like to thank their instructors from MIDS 271.
-abstract: | 
-  One of the very interesting features of Keeling and colleagues’ research is that they were able to evaluate, and re-evaluate the data as new series of measurements were released. This permitted the evaluation of previous models’ performance and a much more difficult question: If their models’ predictions were “off” was this the result of a failure of the model, or a change in the system?
 header-includes: 
+  - '\author{}'
   - '\usepackage{graphicx}'
   - '\usepackage{booktabs}'
+  - '\usepackage{wrapfig}'
   - '\usepackage{subcaption}'
 output: rticles::aea_article
 ---
@@ -64,7 +44,7 @@ if (!"car" %in% rownames(installed.packages())) {
 library(car)
 theme_set(theme_minimal())
 ```
-
+\renewcommand{\columnsep}{10pt}
 # Introduction
 
 \textcolor{red}{In this introduction, you can assume that your reader will have just read your 1997 report.} 
@@ -112,6 +92,11 @@ co2_present <- co2_present %>%
   fill_gaps(.full = TRUE) %>%
   fill(ppm, .direction = "downup") %>%
   fill(ppm, .direction = "updown")
+
+# Create df we will need for plotting
+co2_present_df <- data_frame(co2_present)
+co2_present_df <- co2_present_df %>%
+  mutate(my_date = as.Date(co2_present_df$week))
 ```
 
 
@@ -120,24 +105,46 @@ co2_present <- co2_present %>%
 
 Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
 
-```{r plot the keeling curve}
-fig_2_1 <- co2_present %>%
-  ggplot() +
-  aes(x = week, y = ppm) +
-  geom_line(color = "steelblue") +
-  labs(
-    title = TeX(r'(Weekly Mean $CO_2$)'),
-    subtitle = "Most recent measurements from Mona Loa station",
-    x = "",
-    y = TeX(r'(\[$CO_2$\], ppm)')
-  )
+```{r read objects from 1997 report}
+co2_df <- readRDS("co2_df.df")
+df_frcst <- readRDS("df_frcst.df")
+df_frcst_polynom <- readRDS("df_frcst_polynom.df")
+```
 
-ggsave(filename = "./figures/plot_2_1.pdf", plot = fig_2_1, device = "pdf", units = c("in"), height = 5, width = 10)
+```{r plot the keeling curve}
+ts_and_forecast <- ggplot() + 
+  geom_line(aes(x = my_date, y = ppm, color = "Observed data"), data = co2_present_df) +
+  geom_line(aes(x = my_date, y = mean, color = "SARIMA(1.2.1)(0.1.1)"), data = df_frcst) + 
+  geom_line(aes(x = my_date, y = pred_quad, color = "Quadratic model w month"), data = df_frcst_polynom) +
+  geom_line(aes(x = my_date, y = pred_lin, color = "Linear model"), data = df_frcst_polynom) +
+  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) + 
+  xlim (as.Date("1980-01-01"), as.Date("2025-01-01")) + ylim(325, 425) +
+
+  scale_color_manual(name = "", values = c("Observed data" = "black", 
+                                         "Quadratic model w month" = "darkgreen",
+                                         "SARIMA(1.2.1)(0.1.1)" = "red",
+                                          "Linear model" = "blue")) +
+  # Legend text and position
+  theme(legend.position=c(.25,.85),
+        legend.text=element_text(size=20)) +
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Lines
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank())
+
+ggsave(filename = "./figures/plot2_ts.png", plot = ts_and_forecast, device = "png", units = c("in"), height = 5, width = 10)
 ```
 
 \begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot_2_1.pdf}
-  \caption{Recent trend in $CO_2$ concentration\label{fig:carbon}}
+  \includegraphics[width=.8\linewidth]{./figures/plot2_ts.png}
+  \caption{Recent trend in $CO_2$ concentration\label{fig:OldModels}}
   \begin{figurenotes}
     $CO_2$ concentration from 1974 onward continues to exhibit ever accelerating growth, with strong seasonal oscillations. These patterns points to the need of de-seasoning and de-trending before further analysis.
   \end{figurenotes}
@@ -195,13 +202,8 @@ ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", un
 # Models and Forecasts 
 \textcolor{red}{While these plots might be compelling, it is often challenging to learn the exact nature of a time serires process from only these overview, "time vs. outcome" style of plots. In this section, we present evaluate two classes models to assess which time series model is most appropriate to use. }
 
-## Linear Models 
-
-\textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) }
-
-## ARIMA Models 
-
-\textcolor{red}{Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from the ARIMA model that you fitted in 1997 (i.e. "Task 3a"). Describe how the Keeling Curve evolved from 1997 to the present.}
+## 1997 Models vs realized data 
+\autoref{fig:OldModels} demonstrates the recent trends in [$CO_{2}$] along with the models fitted on the data prior to 1997. It is clear that ever accelerating trend continues, with no noticeable slow down or even reduced acceleration. Clearly, accuracy of predictions from the linear model does not justify even electricity spent on fitting this model. The trend is accelerating and linear model grossly underestimates the real concentration. Remarkably, simple quadratic model augmented with months as categories is extremely accurate, capturing both accelerating trend and seasonal variability 25 years into the future! Our best ARIMA model underestimates real observations only slightly and its performance is still unexpetedly good for predictions that far out. Worth noticing that both seasonal models perform extremely well up until approximately 2016, when the real trend seemed to have had an additional boost. At then time ARIMA model started falling behind at an increased rate. That might be a statistical fluke, or might indicate the change in the $CO_{2}$ emissions. 
 
 ## Performance of 1997 linear and ARIMA models 
 
