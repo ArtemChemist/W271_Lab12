@@ -47,11 +47,10 @@ theme_set(theme_minimal())
 ```
 \renewcommand{\columnsep}{10pt}
 # Introduction
-
-\textcolor{red}{In this introduction, you can assume that your reader will have just read your 1997 report.} 
+In follow-up to our 1997 report we continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects. 
 
 # Mona Loa $CO_{2}$ Data 
-We first download data Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
+NASA \href{https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv}{provides} daily measurement of [$CO_2$] that we download for our analysis.\hfill\break\indent In April of 2019 the Mauna Loa laboratory updated their equipment to measure $CO_2$ with a new technique called Cavity Ring-Down Spectroscopy (CRDS) in contrast to the prior infrared absorption technique. As such, all data from April 2019 onwards will contain measurements using the new method. Additionally, due to eruptions at the Mauna Loa site in 2022, data from December 2022 onwards are from a site at the Maunakea laboratory.
 
 ```{r data download, results='hide'}
 url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv" # URL
