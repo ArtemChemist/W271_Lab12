@@ -12,7 +12,6 @@ In the 1950s, the geochemist Charles David Keeling observed a seasonal pattern i
 In 1958 Keeling began continuous monitoring of atmospheric carbon dioxide concentrations from the Mauna Loa Observatory in Hawaii and soon observed a trend increase carbon dioxide levels in addition to the seasonal cycle. He was able to attribute this trend increase to growth in global rates of fossil fuel combustion. This trend has continued to the present, and is known as the "Keeling Curve."
 
 ```{r load packages, echo = FALSE, message = FALSE}
-install.packages("tidyverse")
 library(tsibble)
 library(latex2exp) 
 library(feasts)
@@ -26,7 +25,7 @@ library(ggplot2)
 ```
 
 
-```{r load packages, echo = FALSE, message = FALSE}
+```{r}
 theme_set(theme_minimal())
 knitr::opts_chunk$set(dpi=1000)
 ```
@@ -213,6 +212,8 @@ The most current data is provided by the United States' National Oceanic and Atm
 Create a data pipeline that starts by reading from the appropriate URL, and ends by saving an object called `co2_present` that is a suitable time series object. 
 
 ```{r pull data from the global monitoring laboratory}
+library(dplyr)
+library(tidyr)
 co2_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_weekly_mlo.csv"
 co2_month_url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
 
@@ -277,11 +278,7 @@ autoplot(co2_present_month_pacf)
 
 ## (1 point) Task 2b: Compare linear model forecasts against realized CO2
 
-Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.) 
-
-```{r}
-data.1997 <- data.frame(index = 1:nrow(co2_ts), month = factor(month(co2_ts$index)), value = co2_ts$value)
-```
+Descriptively compare realized atmospheric CO2 levels to those predicted by your forecast from a linear time model in 1997 (i.e. "Task 2a"). (You do not need to run any formal tests for this task.)
 
 ```{r}
 # Generate newdata to predict on
@@ -358,7 +355,7 @@ head(comparison)
 
 ```{r}
 #Error metrics
-comparison <- comparison %>%
+comparison_error <- comparison %>%
   mutate(error = actual - predicted,
          MAE = abs(error),
          RMSE = error^2)
@@ -371,6 +368,18 @@ RMSE <- sqrt(mean(comparison$RMSE, na.rm = TRUE))
 comparison <- na.omit(comparison)
 MZ_reg <- lm(actual ~ predicted + 0, data = comparison)
 
+slope <- coef(MZ_reg)[1]
+se_slope <- summary(MZ_reg)$coefficients[1, "Std. Error"]
+t_test_slope <- (slope - 1) / se_slope
+
+# print the results
+print(paste("T-test result for slope: ", t_test_slope))
+```
+
+A t-statistic of -146.16 is quite large in magnitude, which suggests a strong rejection of the null hypothesis that the slope is equal to 1. In the context of the Mincer-Zarnowitz regression, this indicates that our forecast is not an unbiased predictor of the actual outcomes. The t-statistic is negative, which suggests that the forecast may be systematically underestimating the actual outcomes (since the estimated slope is less than 1).
+
+
+```{r}
 MAE
 RMSE
 MZ_reg
