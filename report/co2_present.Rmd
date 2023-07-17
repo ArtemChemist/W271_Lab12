@@ -273,7 +273,7 @@ index_of_today_pred <- match(as.Date("2023-01-01"), df_frcst$my_date)
 index_of_1998_real <- match(as.Date("1998-01-01"), as.Date(co2_monthly_avg$my_date))
 index_of_today_real <- match(as.Date("2023-01-01"), as.Date(co2_monthly_avg$my_date))
 
-#Comparison of forecasted and actual values
+# Comparison of forecasted and actual values
 comparison <- data.frame(
   date = df_frcst[index_of_1998_pred:index_of_today_pred,1],
   actual = co2_monthly_avg[index_of_1998_real:index_of_today_real,2],

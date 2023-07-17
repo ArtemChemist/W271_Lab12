@@ -67,21 +67,6 @@ theme_set(theme_minimal())
 ```
 \renewcommand{\columnsep}{10pt}
 # Introduction
-
-This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a question that has received considerable attention in the recent year. At this time the data seem to show trend of increasing  levels year over year, raising concerns in the scientific community.  \hfill\break\indent It is therefore imperative that we determine if there is enough evidence that this recent rise is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.\hfill\break\indent This raise is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase leading to heat waves, drought and rising sea levels. Current 90% confidence estimate place CO2 level at 425-785 ppm for 1.5 °C increase in average Earth temperature as compared to pre-industrial levels.
-
-# Atmospheric $CO_{2}$ Measurement and Data 
-
-The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. This site has been collecting $CO_2$ longer than any other site in the world. It is also unique in that it is representative of air for the entire Northern Hemisphere as it is not affected by nearby vegetation as the site is surrounded be lava flows. All in all, the Mauna Loa data is the gold standard of atmospheric carbon measurements because of the amount *and* quality of the data collected.\hfill\break\indent This site measures the concentration of $CO_2$ by funneling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, and thus the degree of absorption is proportional to [$CO_2$]. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
-
-```{r load the data}
-co2_ts <- tsibble::as_tsibble(co2)
-
-co2_df <- data.frame(index = 1:nrow(co2_ts),
-                     my_date = as.Date(co2_ts$index),
-                     month = factor(month(co2_ts$index)),
-                     value = co2_ts$value)
-```
 \begin{figure}[h]
   \centering
   \begin{subfigure}[t]{0.6\textwidth}
@@ -98,19 +83,103 @@ co2_df <- data.frame(index = 1:nrow(co2_ts),
   \setlength{\belowcaptionskip}{-30pt}
   \caption{Monthly mean [$CO_2$] time series and its models.\label{fig:mainplot}}
 \end{figure}
+This report aims to elucidate trends in the atmospheric $CO_2$ concentration, a question that has received considerable attention in the recent year. At this time the data seem to show trend of increasing  levels year over year, raising concerns in the scientific community.  \hfill\break\indent It is therefore imperative that we determine if there is enough evidence that this recent rise is the result of a larger trend or could be explained by natural variation. If this trend is confirmed then it could pave the way to future research on ways to measure and address the adverse effects and causes of this rise in $CO_2$. This report will look into the existence of this larger trend of rising $CO_2$ levels and, if it exists, will also report on the magnitude of the rise as well as project future $CO_2$ levels.\hfill\break\indent This raise is alarming because $CO_2$ contributes to the "greenhouse effect", where certain gasses collect in the Earth's atmosphere and trap heat from leaving the Earth. As $CO_2$ levels increase we expect the Earth's temperature to increase leading to heat waves, drought and rising sea levels. Current 90% confidence estimate place CO2 level at 425-785 ppm for 1.5 °C increase in average Earth temperature as compared to pre-industrial levels.
+# Atmospheric $CO_{2}$ Measurement and Data 
+The data we will be using for this analysis is the $CO_2$ measurements from a laboratory at Mauna Loa, Hawaii. This site has been collecting $CO_2$ longer than any other site in the world. It is also unique in that it is representative of air for the entire Northern Hemisphere as it is not affected by nearby vegetation as the site is surrounded be lava flows. All in all, the Mauna Loa data is the gold standard of atmospheric carbon measurements because of the amount *and* quality of the data collected.\hfill\break\indent This site measures the concentration of $CO_2$ by funneling air through a cold chamber (to eliminate the effect of humidity) and then measuring how much infrared radiation is absorbed by the $CO_2$ in the chamber. Because $CO_2$ naturally absorbs infrared radiation, and thus the degree of absorption is proportional to [$CO_2$]. The researchers at the Mauna Loa site take great care to continually calibrate their equipment multiple times a day. In addition, the researchers are careful to account for any outside factors that may effect measurements such as the diurnal wind flow patterns present on Mauna Loa. Altogether, we can be confident that the data recorded at Mauna Loa is representative of global $CO_2$ concentrations.
+
+```{r load the data}
+co2_ts <- tsibble::as_tsibble(co2)
+
+co2_df <- data.frame(index = 1:nrow(co2_ts),
+                     my_date = as.Date(co2_ts$index),
+                     month = factor(month(co2_ts$index)),
+                     value = co2_ts$value)
+```
+
 # Exploratory analysis of historical trends in atmospheric $CO_{2}$
-\textcolor{red}{Description how, where and why the data is generated.\hfill\break\indent  Investigate the trend, seasonal and irregular elements. Trends both in levels and growth rates should be discussed\hfill\break\indent}
-\textcolor{blue}{Atmospheric carbon is plotted in \autoref{fig:carbon}, and shows some worrying trends. Just look at how wobbly that line is. How is it possible that we are not living in a simulation, when the lines that plots monthly average $CO_{2}$ looks like this?}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.9\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot1_deseasoned_ts.png}
+    \setlength{\belowcaptionskip}{-5pt}
+    \setlength{\abovecaptionskip}{-15pt}
+    \caption{De-seasoned series\label{fig:notrend_ts}}
+  \end{subfigure}
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot1_acf_ns.png}
+    \caption{ACF\label{fig:notrend_acf}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot1_pacf_ns.png}
+    \caption{PACF\label{fig:notrend_pacf}}
+  \end{subfigure}
+  \setlength{\belowcaptionskip}{-10pt}
+  \caption{Diagnostic plots for de-seasoned series of [$CO_2$]\label{fig:notrend_plots}}
+\end{figure}
 
+Atmospheric $CO_{2}$ level is plotted in \autoref{fig:carbon}(black trace), and shows a worrisome increasing trend with strong seasonal component. \hfill\break\indent \autoref{fig:notrend_plots} shows diagnostic information for this timeseries. After removing yearly variability by differencing with lag of 12 months, the series remains non-stationary, with visible upward trend (not shown). Further detrending with lag 1 brings it close to stationary (\autoref{fig:notrend_ts}). ACF plot (\autoref{fig:notrend_acf}) of this de-trended series shows significant peaks only at lags 1 to 3 and few peaks around lag 12, without slow-decaying pattern. This indicates an MA(3) process and the need for seasonal component in SARIMA model. Similarly, PACF plot (\autoref{fig:notrend_pacf}) has a few significant peaks up to lag 3 and a cluster of significant peaks at lag 12. These features are indicative of AR(3) process, and also point tot eh need of seasonal component in SARIMA model. A grid search of model parameters, including differencing parameter will be required for precise model allocation. 
+
+```{r EDA plots with de-trending}
+my_lag <- 12
+co2_ts <- mutate(co2_ts, deseasoned = difference(value, lag = my_lag))
+co2_ts <- mutate(co2_ts, detrended = difference(deseasoned, lag = 1))
+co2_diff <- slice(co2_ts, my_lag + 2:nrow(co2_ts))
+
+diff_ts <- co2_diff %>%
+  ggplot() +
+  aes(x = index, y = detrended) +
+  geom_line() +
+  labs(x = "", y = "Deseasoned TS")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Panel and axis appearance
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()) 
+
+acf_plot <- co2_diff %>%
+  ACF(detrended, type = "correlation") %>%
+  autoplot() + labs(x = "lag", y = "ACF")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Panel and axis appearance
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()) 
+
+pacf_plot <- co2_diff %>%
+  ACF(detrended, type = "partial") %>%
+  autoplot() + labs(x = "lag", y = "PACF")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Panel and axis appearance
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()) 
+
+ggsave(filename = "./figures/plot1_deseasoned_ts.png", plot = diff_ts, device = "png", units = c("in"), height = 3, width = 8)
+ggsave(filename = "./figures/plot1_acf_ns.png", plot = acf_plot, device = "png", units = c("in"), height = 3, width = 4)
+ggsave(filename = "./figures/plot1_pacf_ns.png", plot = pacf_plot, device = "png", units = c("in"), height = 3, width = 4)
+
+```
 # Models and Forecasts 
-To gain insight into the driving forces behind observed data it is often useful to generate a model of the process. In this section, we discuss simple polynomial as well as more advances SARIMA models of the [$CO_{2}$] trend.
-
-## Linear and Polynomial models 
-\begin{equation}
-\label{eq:one}
-\text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
-\end{equation} 
-
 \begin{figure}[h]
   \centering
   \begin{subfigure}[t]{0.45\textwidth}
@@ -127,6 +196,13 @@ To gain insight into the driving forces behind observed data it is often useful 
   \setlength{\belowcaptionskip}{-20pt}
   \caption{Diagnostic plots for residuals of polynomial models\label{fig:residplot}}
 \end{figure}
+To gain insight into the driving forces behind observed data it is often useful to generate a model of the process. In this section, we discuss simple polynomial as well as more advances SARIMA models of the [$CO_{2}$] trend.
+
+## Linear and Polynomial models 
+\begin{equation}
+\label{eq:one}
+\text{CO}_{2} = \phi_{0} + \phi_{1}t + \phi_{2}t^2 + \epsilon_{eit}
+\end{equation} 
 
 ```{r estimate a linear model, results='hide', warning=FALSE}
 model_lin <- lm(formula = value ~ index, data = co2_df)
@@ -138,13 +214,6 @@ checkresiduals(model_lin, test=FALSE, plot = TRUE)
 dev.off()
 ```
 \autoref{eq:one} is a general form of a polynomial model, where $CO_{2}$ concentration is modeled as a polynomial  function of time and a random error.
-\begin{wrapfigure}[14]{r}{0.5\textwidth}
-    \centering
-    \vspace{-\normalbaselineskip}
-    \hspace{-10pt}
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot1_wmonth_resid.png}
-     \caption{Diagnostic plots for quadratic model with month variable\label{fig:wmonth_resid}}
-\end{wrapfigure} 
 We first estimate the linear model, which is a variant of \autoref{eq:one} with $\phi_{2}=0$. While the residuals for this model appear to follow a normal distribution (\autoref{fig:lin_model_resid}), it is clear that a purely linear model does a poor job at modeling the seasonality of the data. There is also still clearly a trend in the remaining residuals which a linear model fails to capture. Overall, the a linear model does capture some of the trend but would not be sufficient to eliminate it entirely. 
 ```{r quadratic model, results='hide', warning=FALSE}
 model.quad <- lm(formula = value ~ index + I(index^2), data = co2_df)
@@ -155,7 +224,6 @@ png(file = './figures/plot1_quad_mod_resid.png', height=3, width=4, units = c("i
 checkresiduals(model.quad, test=FALSE, plot = TRUE)
 dev.off()
 ```
-
 In attempt to remedy these issues we estimated a quadratic model, which is a variant of \autoref{eq:one} with all $\phi_{i}\neq0$. This model fares slightly better than a linear model. It captures inherent non-linearity of the trend (\autoref{fig:carbon}), but fails to capture seasonality. Diagnostic plots for this model ( \autoref{fig:quad_model_resid}) show that residuals are not normally distributed and ACF plot shows strong osculations. \hfill\break\indent There is not much evidence to support that a logarithmic transformation is necessary. \autoref{fig:decomp} shows that the seasonality factor is not multiplicative and the overall trend does not appear to be exponential.
 
 ```{r decompose, results='hide', warning=FALSE}
@@ -171,7 +239,13 @@ png(file = './figures/plot1_decomposition.png', height=3, width=3, units = c("in
 trend/seasonal
 dev.off()
 ```
-
+\begin{wrapfigure}[14]{r}{0.5\textwidth}
+    \centering
+    \vspace{-\normalbaselineskip}
+    \hspace{-10pt}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot1_wmonth_resid.png}
+     \caption{Diagnostic plots for quadratic model with month variable\label{fig:wmonth_resid}}
+\end{wrapfigure} 
 To address the issue of seasonality, we estimated a quadratic model augmented with the variable for the month. \autoref{fig:carbon} show that the use of monthly dummy variables is a marked improvement over the linear and quadratic models, although it does not entirely capture the seasonality the data. Nevertheless, \autoref{fig:wmonth_resid} reveal that residuals of this model, although close to normally distributed, are far from white noise. Gradually decaying ACF plot indicates substantial AR component in the residual series.
 
 ```{r quadratic model w month variable}
@@ -214,7 +288,6 @@ png(file = './figures/plot1_wmonth_resid.png', height=4, width=5, units = c("in"
 checkresiduals(model.wmonth, test=FALSE, plot = TRUE)
 dev.off()
 ```
-
 ```{r forecasting using the wmonth model}
 # Given a forecast length, find the first and the last month to forecast
 frcst_length <- 12 * (2122 - 1997)
@@ -235,7 +308,6 @@ names(df_frcst_polynom) <- c("my_date",
                                    "pred_quad", "lwr_quad", "upr_quad",
                                    "pred_lin", "lwr_lin", "upr_lin")
 ```
-
 \autoref{fig:frcst} (green trace) demonstrates predictive capabilities of the model. While the 95% predictive interval does appear somewhat small for a forecast so far into the future, the predicted values reliably follow the pattern of the historical data.
 
 ## ARIMA times series model
@@ -244,15 +316,17 @@ names(df_frcst_polynom) <- c("my_date",
   \begin{subfigure}[t]{0.63\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_2frcst.png}
     \setlength{\belowcaptionskip}{-5pt}
+    \setlength{\abovecaptionskip}{-10pt}
     \caption{[$CO_{2}$] forecast with linear and non-linear models\label{fig:2frcst}}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.33\textwidth}
     \centering\includegraphics[width=\textwidth]{./figures/plot1_best_arima_resid.png}
     \setlength{\belowcaptionskip}{-5pt}
+    \setlength{\abovecaptionskip}{-10pt}
     \caption{Model residuals\label{fig:best_resid}}
   \end{subfigure}
-  \setlength{\belowcaptionskip}{-20pt}
+  \setlength{\belowcaptionskip}{-30pt}
   \caption{Diagnostic plots for the selected ARIMA(1.2.1)(0.1.1)[12] model\label{fig:arimaresidplot}}
 \end{figure}
 ```{r Deseason the data, warning=FALSE}
@@ -297,16 +371,15 @@ best_bic <- find_bic(best_arima, co2_ts$value)
 
 # summary(best_arima)
 ```
-We start with de-seasoning of the data by differencing with lag `r my_lag`. We then conduct a grid search of ARIMA models, selecting model with the lowest BIC. The search yields $ARIMA(1.1.1)$ as the preferred model for de-seasoned data. We then fit a few SARIMA models to the original time series, only changing parameters in the range PDQ(0.0.0) to PDQ(2.2.2), agina choosing the model with the lowest BIC. This way we arrived at $SARIMA(1.1.1)(0.1.1)_{12}$ that has BIC of `r round( lin_bic, digits = 1)`. However, this model fails to capture non-linearity that we discovered in the analysis of polynomial models. \autoref{fig:2frcst} shows that its predictions continue into the future almost linearly. To remedy this issue, we introduced additional differencing, hoping that double-differencing would eliminate growth acceleration, similar to how second derivative of distance over time removes acceleration. \hfill\break\indent
-Following this line of thought we selected $SARIMA(1.2.1)(0.1.1)_{12}$ as our final model. This update increased BIC to `r round(best_bic, digits = 1)`, which we consider a reasonable sacrifice to capture non-linearity. \autoref{fig:best_resid} shows that ACF of the residuals does not have significant values and residuals are close to normally distributed, indicating reasonable quality of the model.
+We start with de-seasoning of the data by differencing with lag `r my_lag`. We then conduct a grid search of ARIMA models, selecting model with the lowest BIC. The search yields $ARIMA(1.1.1)$ as the preferred model for de-seasoned data. We then fit a few SARIMA models to the original time series, only changing parameters in the range PDQ(0.0.0) to PDQ(2.2.2), agina choosing the model with the lowest BIC. This way we arrived at $SARIMA(1.1.1)(0.1.1)_{12}$ that has BIC of `r round( lin_bic, digits = 1)`. However, this model fails to capture non-linearity that we discovered in the analysis of polynomial models. \autoref{fig:2frcst} shows that its predictions continue into the future almost linearly. To remedy this issue, we introduced additional differencing, hoping that double-differencing would eliminate growth acceleration, similar to how second derivative of distance over time removes acceleration. \hfill\break\indent Following this line of thought we selected $SARIMA(1.2.1)(0.1.1)_{12}$ as our final model. This update increased BIC to `r round(best_bic, digits = 1)`, which we consider a reasonable sacrifice to capture non-linearity. \autoref{fig:best_resid} shows that ACF of the residuals does not have significant values and residuals are close to normally distributed, indicating reasonable quality of the model.
 
-```{r forecast using two models, echo=TRUE}
+```{r forecast using two models}
 frcst_best <- forecast(best_arima, h=frcst_length)
 frcst_lin <- forecast(lin_arima, h=frcst_length)
 ```
 
 ```{r residuals best model, results='hide'}
-png(file = './figures/plot1_best_arima_resid.png', height=6, width=5, units = c("in"), res = 600)
+png(file = './figures/plot1_best_arima_resid.png', height=4, width=5, units = c("in"), res = 600)
 checkresiduals(best_arima, test=FALSE, plot = TRUE)
 dev.off()
 ```
@@ -342,8 +415,13 @@ forecast_2models_plot <- ggplot() +
     panel.border = element_blank(),
     panel.background = element_blank())
 
-ggsave(filename = "./figures/plot1_2frcst.png", plot = forecast_2models_plot, device = "png", units = c("in"), height = 6, width = 10)
+ggsave(filename = "./figures/plot1_2frcst.png", plot = forecast_2models_plot, device = "png", units = c("in"), height = 4, width = 10)
 ```
+\begin{figure}[ht]
+  \includegraphics[width=.95\linewidth]{./figures/plot1_frcst.png}
+  \setlength{\belowcaptionskip}{-40pt}
+  \caption{[$CO_{2}$] forecast\label{fig:frcst}}
+\end{figure}
 
 ## Forecast atmospheric $CO_{2}$ growth
 ```{r forecast plotting, results='hide'}
@@ -381,7 +459,7 @@ forecast_plot <- ggplot() +
     panel.border = element_blank(),
     panel.background = element_blank())
 
-ggsave(filename = "./figures/plot1_frcst.png", plot = forecast_plot, device = "png", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot1_frcst.png", plot = forecast_plot, device = "png", units = c("in"), height = 3.5, width = 8)
 ```
 
 ```{r save dfs for later use in the next report}
@@ -389,11 +467,7 @@ saveRDS(co2_df, file = "co2_df.df")
 saveRDS(df_frcst, file = "df_frcst.df")
 saveRDS(df_frcst_polynom, file = "df_frcst_polynom.df")
 ```
-\begin{figure}[ht]
-  \includegraphics[width=.95\linewidth]{./figures/plot1_frcst.png}
-  \setlength{\belowcaptionskip}{-20pt}
-  \caption{[$CO_{2}$] forecast\label{fig:frcst}}
-\end{figure}
+
 ```{r forecast rising CO2 levels}
 # Return the date that the given series first hit x num
 first.date <- function(series, num) {
@@ -421,6 +495,8 @@ saveRDS(c(first_time.420, expected.420, last_time.420,
           prediction.2100.lower, prediction.2100.expected, prediction.2100.upper),
           file = "predictions.num")
 ```
+
+Based on the chosen model we can attempt to predict some important milestones. For the year 2100 we expect $[CO_{2}]$ to be `r round(prediction.2100.expected, 0)`ppm  with 95% CI from `r round(prediction.2100.lower, 0)`ppm to `r round(prediction.2100.upper, 0)`ppm. We believe that even this wide confidence interval does not reflect true uncertainty in prediction, as it is highly unlikely that the driving forces behind $CO_{2}$ will remain stable. It is far more likely, that what we observe is the growth phase of a sigmoidal curve. \autoref{wrap-tab:tab} summarizes when 420 ppm and 500 ppm thresholds might be crossed. Fast-increasing uncertainty in predictions, typical for SARIMA models, limits our ability to make meaningful predictions about distant future. For instance, despite fast growing trend, the model can not exclude possibility that atmospheric $CO_{2}$ will never exceed 420 and 500 ppm thresholds. Horizontal lines on \autoref{fig:frcst} show these thresholds. It is evident from the picture that the lower boundary of 95% confidence interval for prediction levels out at approx 400 ppm and might never exceed 420 ppm.
 \begin{wraptable}[6]{r}{0.6\textwidth}
   \setlength{\belowcaptionskip}{-15pt}
   \caption{[$CO_{2}$] thresholds crossing}\label{wrap-tab:tab}
@@ -433,19 +509,11 @@ saveRDS(c(first_time.420, expected.420, last_time.420,
     \bottomrule
   \end{tabular}
 \end{wraptable}
-
-Based on the chosen model we can attempt to predict some important milestones. For the year 2100 we expect $[CO_{2}]$ to be `r round(prediction.2100.expected, 0)`ppm  with 95% CI from `r round(prediction.2100.lower, 0)`ppm to `r round(prediction.2100.upper, 0)`ppm. We believe that even this wide confidence interval does not reflect true uncertainty in prediction, as it is highly unlikely that the driving forces behind $CO_{2}$ will remain stable. It is far more likely, that what we observe is the growth phase of a sigmoidal curve. \autoref{wrap-tab:tab} summarizes when 420 ppm and 500 ppm thresholds might be crossed. Fast-increasing uncertainty in predictions, typical for SARIMA models, limits our ability to make meaningful predictions about distant future. For instance, despite fast growing trend, the model can not exclude possibility that atmospheric $CO_{2}$ will never exceed 420 and 500 ppm thresholds. Horizontal lines on \autoref{fig:frcst} show these thresholds. It is evident from the picture that the lower boundary of 95% confidence interval for prediction levels out at approx 400 ppm and might never exceed 420 ppm.
-
 # Conclusions 
 In this report we assessed data from the Mona Loa observatory to model and predict atmospheric $CO_{2}$ concentrations. Our modeling takes into account only observed  $CO_{2}$ data, with no attempt to bring into consideration other relevant information. Therefore the forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasonable assumption, our model predicts a grim future for the global climate.
-
-\appendix
-\section{Appendix: Model Robustness}
 
 ```{r auto.arima}
 # model.arima <- co2 %>% auto.arima(ic="bic", seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
 # model.arima
 # find_bic(model.arima, co2)
 ```
-
-\textcolor{red}{While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. }
