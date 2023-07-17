@@ -419,7 +419,6 @@ forecast_213000 <- forecast(arima_raw, h = frcst_length, level = c(95))
 ```
 
 ```{r Forecast plotting}
-
 my_date <- seq(ISOdate(2021, 06, 01), by = "week", length.out = frcst_length)
 
 df_toPlot <- cbind.data.frame(my_date = my_date, 
@@ -457,22 +456,68 @@ frcst_arima <- ggplot() +
 ggsave(filename = "./figures/plot2_frcst_arima.png", plot = frcst_arima, device = "png", units = c("in"), height = 4, width = 10)
 ```
 
-\begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot2_frcst_arima.png}
-  \caption{Forecast for future CO2 concentration \label{fig:frcst2y}}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_frcst_arima.png}
+    \caption{Models on raw data \label{fig:frcst2y}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_frcst_nsa.png}
+    \caption{Models on de-seasoned data \label{fig:frcst2y_raw}}
+  \end{subfigure}
+  \caption{Predictive performance of the fitted models}
 \end{figure}
-Predictive performance of the three models discussed above is illustrated by \autolabel{fig:frcst2y}.
-
-
-
 
 ```{r qaud on deseasoned data}
 model.quad <- lm(formula = deseasoned ~ index + I(index^2), data = co2_train)
 arima_deseasoned <- arima(co2_train$deseasoned,
   order = c(0, 1, 2),
   seasonal = list(order = c(0, 0, 0), period = 52))
+
+forecast_012 <- forecast(arima_deseasoned, h = frcst_length, level = c(95))
+forecast_quad <- fitted(model.quad, h = frcst_length)
+idx = length(forecast_quad)
+
+df_toPlot_ns <-  cbind.data.frame(my_date = my_date[1:idx], 
+             mean = forecast_012$mean[1:idx], lower = forecast_012$lower[1:idx,1], upper = forecast_012$upper[1:idx,1],
+             mean_d = forecast_quad)
+
+
 ```
-Fitting quadratic model to de-seasoned data reveals trends similar to the ones we saw in 1997. 
+
+```{r plotting deseasoned forecast}
+frcst_arima_nsa <- ggplot() +
+  geom_line(  aes(x = my_date, y = deseasoned, color = "Observed data"), data = co2_test)+
+  geom_line(  aes(x = my_date, y = mean, color = "ARIMA(0.1.2)"), data = df_toPlot_ns) +
+  geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill = "yellow", alpha = 0.25, data = df_toPlot_ns) +
+  geom_line(  aes(x = my_date, y = mean_d, color = "Quadratic"), data = df_toPlot_ns) +
+  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) + ylim(-1, 5) + 
+  xlim (ISOdate(2021, 06, 01), ISOdate(2023, 06, 01)) +
+   # Legend colors
+  scale_color_manual(name = "", values = c("Observed data" = "black", 
+                                         "ARIMA(0.1.2)" = "orange",
+                                         "Quadratic" = "darkgreen")) +
+  # Legend text and position
+  theme(legend.position=c(.20,.85),
+        legend.text=element_text(size=20)) +
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20)) +
+  # Lines
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank())
+
+ggsave(filename = "./figures/plot2_frcst_nsa.png", plot = frcst_arima_nsa, device = "png", units = c("in"), height = 4, width = 10)
+```
+
+Predictive performance of the three models discussed above is illustrated by \autoref{fig:frcst2y}. Both SARIMA models closely match observed data. Confidence interval of SARIMA(1.1.2)(0.1.1) shown in yellow, contains test data throughout whole region. ARIMA model, lacking seasonal component, fails almost immediately. Fitting quadratic model to de-seasoned data demonstrates very good performance, as does ARIMA model (\autoref{fig:frcst2y_raw}). 
 
 ## Forecasts: How bad could it get?
 
