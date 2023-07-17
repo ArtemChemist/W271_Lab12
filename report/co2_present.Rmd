@@ -4,9 +4,29 @@ short: "What Keeling missed all these years"
 journal: "AER" # AER, AEJ, PP, JEL
 month: "`r format(Sys.Date(), '%m')`"
 year: "`r format(Sys.Date(), '%Y')`"
-author: ""
 vol: 0
 issue: 0
+author:
+  - name: Sean Seneviratne
+    firstname: Sean
+    surname: Seneviratne
+    email: sean_senev@ischool.berkeley.edu
+    affiliation: UC Berkeley
+  - name: Trevor Dalton
+    firstname: Trevor
+    surname: Dalton
+    email: trevor.dalton@ischool.berkeley.edu
+    affiliation: UC Berkeley
+  - name: Kyle Ruan
+    firstname: Kyle
+    surname: Ruan
+    email: kyleruan@ischool.berkeley.edu
+    affiliation: UC Berkeley
+  - name: Artem Lebedev
+    firstname: Artem 
+    surname: Lebedev
+    email: artem.lebedev@berkeley.edu
+    affiliation: McMaster University
 header-includes: 
   - '\author{}'
   - '\usepackage{graphicx}'
@@ -18,7 +38,7 @@ output: rticles::aea_article
 
 ```{r setup, echo=FALSE}
 ## default to not show code, unless we ask for it.
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, dpi = 1000)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, dpi = 600)
 options(digits = 8)
 ```
 
@@ -47,6 +67,10 @@ theme_set(theme_minimal())
 ```
 \renewcommand{\columnsep}{10pt}
 # Introduction
+\begin{figure}[ht]
+  \includegraphics[width=.8\linewidth]{./figures/plot2_ts.png}
+  \caption{Recent trend in [$CO_2$] and models trained on pre-1997 data\label{fig:OldModels}}
+\end{figure} 
 In follow-up to our 1997 report we continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects. 
 
 # Mona Loa $CO_{2}$ Data 
@@ -101,9 +125,28 @@ co2_present_df <- co2_present_df %>%
 
 
 ## Recent Trends in Atmospheric Carbon 
-\textcolor{red}{Conduct the same EDA on this data. Describe how the Keeling Curve evolved from 1997 to the present, noting where the series seems to be following similar trends to the series that you "evaluated in 1997" and where the series seems to be following different trends. This EDA can use the same, or very similar tools and views as you provided in your 1997 report.}
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.9\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_deseasoned_ts.png}
+    \setlength{\belowcaptionskip}{-5pt}
+    \caption{De-seasoned series\label{fig:notrend_ts}}
+  \end{subfigure}
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_acf_ns.png}
+    \caption{ACF\label{fig:notrend_acf}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_pacf_ns.png}
+    \caption{PACF\label{fig:notrend_pacf}}
+  \end{subfigure}
+  \setlength{\belowcaptionskip}{-10pt}
+  \caption{Diagnostic plots for de-seasoned series of [$CO_2$] after 1996\label{fig:notrend_plots}}
+\end{figure}
 
-Atmospheric carbon is plotted in \autoref{fig:OldModels}, and shows relentless increase in atmospheric $CO_2$ concentration even at the remote Hawaiian island.
+Atmospheric $CO_{2}$ level is plotted in \autoref{fig:OldModels}(black trace), and shows relentless increase even at the remote Hawaiian island. In fact, the $CO_{2}$ emissions level is rising at a higher rate between 2010 and now than the period before 1996, as demonstrated by the steepening slope in the chart below. In general, the trend is similar to the trend observed before 1996: steady uptrend.\hfill\break\indent After removing yearly variability from weekly data by differencing with lag 52 the series becomes close to stationary, although with some upward trend (\autoref{fig:notrend_ts}). ACF plot (\autoref{fig:notrend_acf}) of the series shows gradual decay and PACF plot (\autoref{fig:notrend_pacf}) has a few significant peaks up to lag 4. These features are indicative of AR process, but presence of upward trend complicates the analysis. A grid search of model parameters, including differencing parameter will be required for precise model allocation. 
 
 ```{r read objects from 1997 report}
 co2_df <- readRDS("co2_df.df")
@@ -142,11 +185,6 @@ ts_and_forecast <- ggplot() +
 ggsave(filename = "./figures/plot2_ts.png", plot = ts_and_forecast, device = "png", units = c("in"), height = 5, width = 10)
 ```
 
-\begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot2_ts.png}
-  \caption{Recent trend in [$CO_2$] and models trained on pre-1997 data\label{fig:OldModels}}
-\end{figure} 
-
 ```{r EDA plots with de-trending}
 my_lag <- 52
 co2_present <- mutate(co2_present, deseasoned = difference(ppm, lag = my_lag))
@@ -157,27 +195,41 @@ co2_diff  <- co2_diff  %>%
   mutate(my_date = make_datetime(year = year(week), month = month(week), day = day(week)))
 
 diff_ts <- co2_diff %>%
-  filter(week > yearweek("1998-01-01")) %>%
+  filter(week > yearweek("1996-01-01")) %>%
   ggplot() +
-  aes(x = week, y = detrended) +
+  aes(x = my_date, y = deseasoned) +
   geom_line() +
-  labs(x = "", y = "Detrended TS")
+  labs(x = "", y = "Deseasoned TS")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20),
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20))
 
 acf_plot <- co2_diff %>%
-  filter(week > yearweek("1998-01-01")) %>%
-  ACF(detrended, type = "correlation") %>%
-  autoplot() + labs(x = "lag", y = "ACF")
+  filter(week > yearweek("1996-01-01")) %>%
+  ACF(deseasoned, type = "correlation") %>%
+  autoplot() + labs(x = "lag", y = "ACF")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20))
 
 pacf_plot <- co2_diff %>%
-  filter(week > yearweek("1998-01-01")) %>%
-  ACF(detrended, type = "partial") %>%
-  autoplot() + labs(x = "lag", y = "PACF")
+  filter(week > yearweek("1996-01-01")) %>%
+  ACF(deseasoned, type = "partial") %>%
+  autoplot() + labs(x = "lag", y = "PACF")+
+  # Axis text
+  theme(axis.text.x=element_text(size=20), 
+        axis.text.y=element_text(size=20), 
+        axis.title.x=element_text(size=20),
+        axis.title.y=element_text(size=20))
 
-ggsave(filename = "./figures/plot_2_2.pdf", plot = diff_ts, device = "pdf", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot2_deseasoned_ts.png", plot = diff_ts, device = "png", units = c("in"), height = 3, width = 8)
+ggsave(filename = "./figures/plot2_acf_ns.png", plot = acf_plot, device = "png", units = c("in"), height = 3, width = 4)
+ggsave(filename = "./figures/plot2_pacf_ns.png", plot = pacf_plot, device = "png", units = c("in"), height = 3, width = 4)
 
-ggsave(filename = "./figures/plot_2_3.pdf", plot = acf_plot, device = "pdf", units = c("in"), height = 4, width = 5)
-
-ggsave(filename = "./figures/plot_2_4.pdf", plot = pacf_plot, device = "pdf", units = c("in"), height = 4, width = 5)
 ```
 
 # Models and Forecasts 
@@ -187,6 +239,12 @@ In this section we will evaluate performance of historic models and generate new
 \autoref{fig:OldModels} demonstrates the recent trends in [$CO_{2}$] along with the models fitted on the data prior to 1997. It is clear that ever accelerating trend continues, with no noticeable slow down or even reduced acceleration. Clearly, accuracy of predictions from the linear model does not justify even electricity spent on fitting this model. The trend is accelerating and linear model grossly underestimates the real concentration. Remarkably, simple quadratic model augmented with months as categories is extremely accurate, capturing both accelerating trend and seasonal variability 25 years into the future! Our best ARIMA model underestimates real observations only slightly and its performance is still unexpetedly good for predictions that far out. Worth noticing that both seasonal models perform extremely well up until approximately 2016, when the real trend seemed to have had an additional boost. At then time ARIMA model started falling behind at an increased rate. That might be a statistical fluke, or might indicate the change in the $CO_{2}$ emissions. 
 
 ## Performance of 1997 linear and ARIMA models 
+\begin{wrapfigure}[16]{r}{0.5\textwidth}
+    \centering
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_MZreg.png}
+    \caption{Mincer-Zarnowitz regression for 1997 ARIMA model\label{fig:MZreg}}
+\end{wrapfigure} 
+
 ```{r read predictions from previous report}
 mydat <- readRDS("predictions.num")
 first_time.420 <- mydat[1]
@@ -199,7 +257,7 @@ prediction.2100.lower <- mydat[7]
 prediction.2100.expected <- mydat[81]
 prediction.2100.upper <- mydat[9]
 ```
-It appears that the first time [$CO_{2}$] exceeded 420ppm was in Feb 2023 and the last time it was that low was in Mar 2023. It is unlikely it will return to this value any time soon. That correlates surprisingly well with out 25 year-old prediction that it will reach this threshold on `r expected.420`. As predicted, we are still far away from crossing 500 ppm threshold. 
+It appears that the first time [$CO_{2}$] exceeded 420 ppm was in Feb 2022 and the last time it was that low was in Mar 2023. It is unlikely it will return to this value any time soon. That correlates surprisingly well with out 25 year-old prediction that it will reach this threshold on `r expected.420`. As predicted, we are still far away from crossing 500 ppm threshold. 
 
 ```{r}
 co2_monthly_avg <- co2_present_df %>%
@@ -260,43 +318,26 @@ p_value_intercept <- 2 * pt(abs(t_stat_inter), df = df, lower.tail = FALSE)
 # p-value for slope
 p_value_slope <- 2 * pt(abs(t_stat_slope), df = df, lower.tail = FALSE)
 ```
-\begin{wrapfigure}[14]{r}{0.5\textwidth}
-    \centering
-    \vspace{-\normalbaselineskip}
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_MZreg.png}
-     \caption{Mincer-Zarnowitz regression for 1997 ARIMA model\label{fig:MZreg}}
-\end{wrapfigure} 
-In this case, an RMSE of `r round(RMSE, digits = 1)` means that our model, on average, makes an error of about `r round(RMSE, digits = 1)`ppm in its predictions. \hfill\break\indent We use Mincer-Zarnowitz regression to quantify predictive power of our model. To avoid extrapolation too far from the data, we shift both predicted and actual data by 365 ppm. Intercept of this regression is `r round(MZ_reg$coefficients[1], digits=1)` and  slope is `r round(MZ_reg$coefficients[2], digits=3)`. Given how close these parameters are to 0 and 1, we conclude that our ARIMA model has high predictive power. However, t-test rejects hypothesis that they are equal to 0 and 1 with p-values of `r p_value_intercept`  and `r p_value_slope` respectively. This is likely due to the high number of data points, that makes small deviations highly significant. 
+
+In this case, an RMSE of `r round(RMSE, digits = 1)` means that our model, on average, makes an error of about `r round(RMSE, digits = 1)` ppm in its predictions. \hfill\break\indent We use Mincer-Zarnowitz regression to quantify predictive power of our model. To avoid extrapolation too far from the data, we shift both predicted and actual data by 365 ppm. Intercept of this regression is `r round(MZ_reg$coefficients[1], digits=1)` and  slope is `r round(MZ_reg$coefficients[2], digits=3)`. Given how close these parameters are to 0 and 1, we conclude that our ARIMA model has high predictive power. t-test fails to reject hypothesis that intercept is not 0 with p value `r round(p_value_intercept, digits = 2)`. However, t-test rejects hypothesis that slope is 1 with p-value `r p_value_slope`. This is likely due to the high number of data points, that makes small deviations highly significant. 
 
 ```{r plot MZ regression}
 plot_MZreg <- comparison %>% ggplot() + 
   aes(x = pred_md, y = act_md) +
   geom_point(color = "darkgray", size = 0.7) + 
-  geom_line(aes(x = pred_md, y = modeled ))
-ggsave(filename = "./figures/plot2_MZreg.png", plot = plot_MZreg, device = "png", units = c("in"), height = 4, width = 4)
+  geom_line(aes(x = pred_md, y = modeled )) +
+  labs(x = "Predicted, shifted", y = "Actual, shifted") + 
+  # Axis text
+  theme(axis.text.x=element_text(size=12), 
+        axis.text.y=element_text(size=12), 
+        axis.title.x=element_text(size=12),
+        axis.title.y=element_text(size=12))
+ggsave(filename = "./figures/plot2_MZreg.png", plot = plot_MZreg, device = "png", units = c("in"), height = 3, width = 4)
 ```
 
 ## Best models on present data
-\begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot_2_2.pdf}
-  \caption{De-seasoned/-trended series for $CO_2$ concentration\label{fig:notrend_ts}}
-\end{figure} 
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot_2_3.pdf}
-    \caption{Recent trend in $CO_2$ concentration\label{fig:notrend_acf}}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot_2_4.pdf}
-    \caption{Recent trend in $CO_2$ concentration\label{fig:notrend_pacf}}
-  \end{subfigure}
-  \caption{Diagnostic plots for de-trended series\label{fig:notrend_plots}}
-\end{figure}
-
-In this section we will compare perfromance of various models in terms of their predictive power. For that we will save a small portion of our data, the most recent 2 years, as a test set. We will use the rest of the data (train set) to generate the models.
-```{r Split into test and train, echo = TRUE}
+In this section we will compare performance of various models in terms of their predictive power. For that we will save a small portion of our data, after June 2021, as a test set. We will use the data from 1998 to 2021 as a training set to generate the models. We decided to not use pre-1998 data as there were at least two areas of irregularity: around gas price hike early in the 1970 and around Asian economic crisis of the 1990's.
+```{r Split into test and train}
 split.point <- "2021-06-01"
 
 # Create a training set
@@ -438,7 +479,7 @@ frcst_arima <- ggplot() +
                                          "SARIMA(1.2.2)(0.1.1)" = "red",
                                          "ARIMA(2.1.3)" = "darkgreen")) +
   # Legend text and position
-  theme(legend.position=c(.20,.85),
+  theme(legend.position=c(.30,.85),
         legend.text=element_text(size=20)) +
   # Axis text
   theme(axis.text.x=element_text(size=20), 
@@ -452,20 +493,21 @@ frcst_arima <- ggplot() +
     panel.border = element_blank(),
     panel.background = element_blank())
 
-ggsave(filename = "./figures/plot2_frcst_arima.png", plot = frcst_arima, device = "png", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot2_frcst_arima.png", plot = frcst_arima, device = "png", units = c("in"), height = 4, width = 7)
 ```
 
 \begin{figure}[h]
   \centering
-  \begin{subfigure}[b]{0.45\textwidth}
+  \begin{subfigure}[b]{0.65\textwidth}
     \includegraphics[width=\textwidth]{./figures/plot2_frcst_arima.png}
-    \caption{Models on raw data \label{fig:frcst2y}}
+    \caption{Raw data \label{fig:frcst2y}}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[b]{0.45\textwidth}
+  \begin{subfigure}[b]{0.32\textwidth}
     \includegraphics[width=\textwidth]{./figures/plot2_frcst_nsa.png}
-    \caption{Models on de-seasoned data \label{fig:frcst2y_raw}}
+    \caption{Deseasoned data \label{fig:frcst2y_raw}}
   \end{subfigure}
+  \setlength{\belowcaptionskip}{-30pt}
   \caption{Predictive performance of the fitted models}
 \end{figure}
 
@@ -492,14 +534,14 @@ frcst_arima_nsa <- ggplot() +
   geom_line(  aes(x = my_date, y = mean, color = "ARIMA(0.1.2)"), data = df_toPlot_ns) +
   geom_ribbon(aes(x = my_date, ymin = lower, ymax = upper), fill = "yellow", alpha = 0.25, data = df_toPlot_ns) +
   geom_line(  aes(x = my_date, y = mean_d, color = "Quadratic"), data = df_toPlot_ns) +
-  labs(x = element_blank(), y = TeX(r'(\[$CO_2$\], ppm)')) + ylim(-1, 5) + 
+  labs(x = element_blank(), y = TeX(r'(d\[$CO_2$\], ppm)')) + ylim(-1, 6) + 
   xlim (ISOdate(2021, 06, 01), ISOdate(2023, 06, 01)) +
    # Legend colors
   scale_color_manual(name = "", values = c("Observed data" = "black", 
                                          "ARIMA(0.1.2)" = "orange",
                                          "Quadratic" = "darkgreen")) +
   # Legend text and position
-  theme(legend.position=c(.20,.85),
+  theme(legend.position=c(.40,.85),
         legend.text=element_text(size=20)) +
   # Axis text
   theme(axis.text.x=element_text(size=20), 
@@ -513,7 +555,7 @@ frcst_arima_nsa <- ggplot() +
     panel.border = element_blank(),
     panel.background = element_blank())
 
-ggsave(filename = "./figures/plot2_frcst_nsa.png", plot = frcst_arima_nsa, device = "png", units = c("in"), height = 4, width = 10)
+ggsave(filename = "./figures/plot2_frcst_nsa.png", plot = frcst_arima_nsa, device = "png", units = c("in"), height = 4, width = 3)
 ```
 
 Predictive performance of the three models discussed above is illustrated by \autoref{fig:frcst2y}. Both SARIMA models closely match observed data. Confidence interval of SARIMA(1.1.2)(0.1.1) shown in yellow, contains test data throughout whole region. ARIMA model, lacking seasonal component, fails almost immediately. Fitting quadratic model to de-seasoned data demonstrates very good performance, as does ARIMA model (\autoref{fig:frcst2y_raw}). 
@@ -558,4 +600,6 @@ Based on the SARIMA(1.2.2)(0.1.1) model that we deem more suitable for long-term
 
 # Conclusions 
 
-\textcolor{red}{What to conclude is unclear. }
+In this report, we assessed data from the Mona Loa observatory to model and predict atmospheric CO2 concentrations for the next century. Compared to the last report, we have access to present data, which improves our predictive power. The forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this
+reasonable assumption, our model still predicts a very grim future for the global climate if no actions are taken. In fact, our predictions are fairly close to the last report, which indicates that nothing has been done to stop the trend. The global CO2 level will reach a whopping `r round(prediction.2122.expected, 0)` ppm in 2122 based on 
+our forecast, making the planet uninhabitable.
