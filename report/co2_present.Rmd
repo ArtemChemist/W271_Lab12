@@ -268,10 +268,10 @@ co2_monthly_avg <- co2_present_df %>%
 co2_monthly_avg <-  co2_monthly_avg %>%
   mutate(my_date = make_datetime(year = year(month_year), month = month(month_year), day = 01))
 
-index_of_1998_pred <- match("1998-01-01", df_frcst$my_date)
-index_of_today_pred <- match("2023-01-01", df_frcst$my_date)
-index_of_1998_real <- match("1998-01-01", co2_monthly_avg$my_date)
-index_of_today_real <- match("2023-01-01", co2_monthly_avg$my_date)
+index_of_1998_pred <- match(as.Date("1998-01-01"), df_frcst$my_date)
+index_of_today_pred <- match(as.Date("2023-01-01"), df_frcst$my_date)
+index_of_1998_real <- match(as.Date("1998-01-01"), as.Date(co2_monthly_avg$my_date))
+index_of_today_real <- match(as.Date("2023-01-01"), as.Date(co2_monthly_avg$my_date))
 
 #Comparison of forecasted and actual values
 comparison <- data.frame(
