@@ -423,8 +423,7 @@ my_date <- seq(ISOdate(2021, 06, 01), by = "week", length.out = frcst_length)
 
 df_toPlot <- cbind.data.frame(my_date = my_date, 
              mean = forecast_112011$mean, lower = forecast_112011$lower[,1], upper = forecast_112011$upper[,1], 
-             mean_d = forecast_122011$mean, lower_d = forecast_122011$lower[,1], upper_d = forecast_122011$upper[,1],
-             mean_s = forecast_213000$mean, lower_s = forecast_213000$lower[,1], upper_s = forecast_213000$upper[,1])
+             mean_d = forecast_122011$mean, mean_s = forecast_213000$mean)
 frcst_arima <- ggplot() +
   geom_line(  aes(x = my_date, y = ppm, color = "Observed data"), data = co2_test)+
   geom_line(  aes(x = my_date, y = mean, color = "SARIMA(1.1.2)(0.1.1)"), data = df_toPlot) +
@@ -520,18 +519,43 @@ ggsave(filename = "./figures/plot2_frcst_nsa.png", plot = frcst_arima_nsa, devic
 Predictive performance of the three models discussed above is illustrated by \autoref{fig:frcst2y}. Both SARIMA models closely match observed data. Confidence interval of SARIMA(1.1.2)(0.1.1) shown in yellow, contains test data throughout whole region. ARIMA model, lacking seasonal component, fails almost immediately. Fitting quadratic model to de-seasoned data demonstrates very good performance, as does ARIMA model (\autoref{fig:frcst2y_raw}). 
 
 ## Forecasts: How bad could it get?
+```{r forecast rising CO2 levels}
+# Return the date that the given series first hit x num
+first.date <- function(series, num) {
+  return(df_toPlot$my_date[which(series > num)[1]])
+}
 
-\textcolor{red}{With the non-seasonally adjusted data series, generate predictions for when atmospheric CO2 is expected to be at 420 ppm and 500 ppm levels for the first and final times (consider prediction intervals as well as point estimates in your answer). Generate a prediction for atmospheric CO2 levels in the year 2122. How confident are you that these will be accurate predictions?}
+# When CO2 is expected to hit 420ppm
+first_time.420 <- as.Date(first.date(df_toPlot$upper, 420))
+expected.420 <- as.Date(first.date(df_toPlot$mean, 420))
+last_time.420 <- as.Date(first.date(df_toPlot$lower, 420))
 
+# When CO2 is expected to hit 500ppm
+first_time.500 <- as.Date(first.date(df_toPlot$upper, 500))
+expected.500 <- as.Date(first.date(df_toPlot$mean, 500))
+last_time.500 <- as.Date(first.date(df_toPlot$lower, 500))
+
+# Expected CO2 levels in the year 2100
+prediction.2122.index <- length(df_toPlot$my_date)
+prediction.2122.lower <- df_toPlot$lower[prediction.2122.index]
+prediction.2122.expected <- df_toPlot$mean[prediction.2122.index]
+prediction.2122.upper <- df_toPlot$upper[prediction.2122.index]
+```
+\begin{wraptable}[6]{r}{0.6\textwidth}
+  \setlength{\belowcaptionskip}{-15pt}
+  \caption{[$CO_{2}$] thresholds crossing}\label{wrap-tab:tab1}
+  \begin{tabular}{llll}
+    \toprule 
+    ppm & As early as & Expected & Last time \\
+    \hline
+    420 & `r first_time.420` & `r expected.420` & `r last_time.420` \\
+    500 & `r first_time.500` & `r expected.500` & `r last_time.500`  \\
+    \bottomrule
+  \end{tabular}
+\end{wraptable}
+
+Based on the SARIMA(1.2.2)(0.1.1) model that we deem more suitable for long-term forecasting, we can attempt to predict some important milestones. For the year 2122 we expect $[CO_{2}]$ to be `r round(prediction.2122.expected, 0)` ppm  with 95% CI from `r round(prediction.2122.lower, 0)` ppm to `r round(prediction.2122.upper, 0)` ppm. Our previous model was successful at predicting data 25 years out, and the overall trend remains the same for the past 60 years, so we are cautiously optimistic about quality of this prediction. There is so far no sign of slowing down of the trend, so sigmoidal inflection will not happen any time soon. \autoref{wrap-tab:tab1} summarizes when 420 ppm and 500 ppm thresholds might be crossed. Fast-increasing uncertainty in predictions, typical for SARIMA models, limits our ability to make meaningful predictions about distant future. For instance, despite fast growing trend, the model can not exclude possibility that atmospheric $CO_{2}$ will never exceed 500 ppm thresholds.
 
 # Conclusions 
 
 \textcolor{red}{What to conclude is unclear. }
-
-\bibliographystyle{aea}
-\bibliography{references}
-
-\appendix
-\section{Appendix: Model Robustness}
-
-\textcolor{red}{While the most plausible model that we estimate is reported in the main, "Modeling" section, in this appendix to the article we examine alternative models. Here, our intent is to provide a skeptic that does not accept our assessment of this model as an ARIMA of order (1,2,3) an understanding of model forecasts under alternative scenarios. }
