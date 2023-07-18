@@ -376,6 +376,10 @@ We start with de-seasoning of the data by differencing with lag `r my_lag`. We t
 ```{r forecast using two models}
 frcst_best <- forecast(best_arima, h=frcst_length)
 frcst_lin <- forecast(lin_arima, h=frcst_length)
+
+# Long enough for the "As late as" value
+polynomdate_long <- as.Date(seq(ISOdate(1998,01,01), by = "month", length.out = frcst_length*3))
+frcst_best_long <- forecast(best_arima, h=frcst_length*3)
 ```
 
 ```{r residuals best model, results='hide'}
@@ -385,7 +389,7 @@ dev.off()
 ```
 
 ```{r Double-diff explanation}
-df_2frcst <- cbind.data.frame(polynomdate, frcst_lin$mean, frcst_best$mean )
+df_2frcst <- cbind.data.frame(polynomdate, frcst_lin$mean, frcst_best$mean)
 names(df_2frcst) <- c("my_date", "single_diff", "double_diff")
 
 forecast_2models_plot <- ggplot() + 
@@ -469,26 +473,44 @@ saveRDS(df_frcst_polynom, file = "df_frcst_polynom.df")
 ```
 
 ```{r forecast rising CO2 levels}
+df_frcst_long <- cbind.data.frame(polynomdate_long, frcst_best_long$mean,
+                                  frcst_best_long$lower, frcst_best_long$upper)
+df_frcst_long  <- df_frcst_long[c(1,2,4,6)]
+names(df_frcst_long) <- c("my_date", "mean", "lower", "upper")
+
 # Return the date that the given series first hit x num
 first.date <- function(series, num) {
   return(df_frcst$my_date[which(series > num)[1]])
 }
 
+expected.date <- function(series, num) {
+  valid_dates <- which(abs(series - num) < 1)
+  middle_index <- ceiling(length(valid_dates)/2)
+  return(df_frcst_long$my_date[valid_dates[middle_index]])
+}
+
+last.date <- function(series, num) {
+    vec <- which(series < num)
+  return(df_frcst_long$my_date[vec[length(vec)]])
+}
+
 # When CO2 is expected to hit 420ppm
-first_time.420 <- first.date(df_frcst$upper, 420)
-expected.420 <- first.date(df_frcst$mean, 420)
-last_time.420 <- first.date(df_frcst$lower, 420)
+first_time.420 <- first.date(df_frcst_long$upper, 420)
+expected.420 <- expected.date(df_frcst_long$mean, 420)
+last_time.420 <- last.date(df_frcst_long$lower, 420)
+last_time.420 <- "NA" # Hardcoded to NA since it never reaches 500ppm
 
 # When CO2 is expected to hit 500ppm
-first_time.500 <- first.date(df_frcst$upper, 500)
-expected.500 <- first.date(df_frcst$mean, 500)
-last_time.500 <- first.date(df_frcst$lower, 500)
+first_time.500 <- first.date(df_frcst_long$upper, 500)
+expected.500 <- expected.date(df_frcst_long$mean, 500)
+last_time.500 <- last.date(df_frcst_long$lower, 500)
+last_time.500 <- "NA" # Hardcoded to NA since it never reaches 500ppm
 
 # Expected CO2 levels in the year 2100
-prediction.2100.index <- match("2100-01-01", df_frcst$my_date)
-prediction.2100.lower <- df_frcst$lower[prediction.2100.index]
-prediction.2100.expected <- df_frcst$mean[prediction.2100.index]
-prediction.2100.upper <- df_frcst$upper[prediction.2100.index]
+prediction.2100.index <- match(as.Date("2100-01-01"), df_frcst_long$my_date)
+prediction.2100.lower <- df_frcst_long$lower[prediction.2100.index]
+prediction.2100.expected <- df_frcst_long$mean[prediction.2100.index]
+prediction.2100.upper <- df_frcst_long$upper[prediction.2100.index]
 
 saveRDS(c(first_time.420, expected.420, last_time.420,
           first_time.500, expected.500, last_time.500,

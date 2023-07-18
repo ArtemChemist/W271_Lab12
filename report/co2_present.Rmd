@@ -567,15 +567,26 @@ first.date <- function(series, num) {
   return(df_toPlot$my_date[which(series > num)[1]])
 }
 
+expected.date <- function(series, num) {
+  valid_dates <- which(abs(series - num) < 1)
+  middle_index <- ceiling(length(valid_dates)/2)
+  return(df_toPlot$my_date[valid_dates[middle_index]])
+}
+
+last.date <- function(series, num) {
+  vec <- which(series < num)
+  return(df_toPlot$my_date[vec[length(vec)]])
+}
+
 # When CO2 is expected to hit 420ppm
 first_time.420 <- as.Date(first.date(df_toPlot$upper, 420))
-expected.420 <- as.Date(first.date(df_toPlot$mean, 420))
-last_time.420 <- as.Date(first.date(df_toPlot$lower, 420))
+expected.420 <- as.Date(expected.date(df_toPlot$mean, 420))
+last_time.420 <- as.Date(last.date(df_toPlot$lower, 420))
 
 # When CO2 is expected to hit 500ppm
 first_time.500 <- as.Date(first.date(df_toPlot$upper, 500))
-expected.500 <- as.Date(first.date(df_toPlot$mean, 500))
-last_time.500 <- as.Date(first.date(df_toPlot$lower, 500))
+expected.500 <- as.Date(expected.date(df_toPlot$mean, 500))
+last_time.500 <- as.Date(last.date(df_toPlot$lower, 500))
 
 # Expected CO2 levels in the year 2100
 prediction.2122.index <- length(df_toPlot$my_date)
