@@ -35,13 +35,11 @@ header-includes:
   - '\usepackage{subcaption}'
 output: rticles::aea_article
 ---
-
 ```{r setup, echo=FALSE}
 ## default to not show code, unless we ask for it.
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, dpi = 600)
 options(digits = 8)
 ```
-
 
 ```{r load packages, echo = FALSE, message = FALSE}
 library(tidyverse)
@@ -65,16 +63,6 @@ if (!"car" %in% rownames(installed.packages())) {
 library(car)
 theme_set(theme_minimal())
 ```
-\renewcommand{\columnsep}{10pt}
-# Introduction
-\begin{figure}[ht]
-  \includegraphics[width=.8\linewidth]{./figures/plot2_ts.png}
-  \caption{Recent trend in [$CO_2$] and models trained on pre-1997 data\label{fig:OldModels}}
-\end{figure} 
-In follow-up to our 1997 report we continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects. 
-
-# Mona Loa $CO_{2}$ Data 
-NASA \href{https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv}{provides} daily measurement of [$CO_2$] that we download for our analysis.\hfill\break\indent In April of 2019 the Mauna Loa laboratory updated their equipment to measure $CO_2$ with a new technique called Cavity Ring-Down Spectroscopy (CRDS) in contrast to the prior infrared absorption technique. As such, all data from April 2019 onwards will contain measurements using the new method. Additionally, due to eruptions at the Mauna Loa site in 2022, data from December 2022 onwards are from a site at the Maunakea laboratory.
 
 ```{r data download, results='hide'}
 url <- "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv" # URL
@@ -122,31 +110,6 @@ co2_present_df <- data_frame(co2_present)
 co2_present_df <- co2_present_df %>%
   mutate(my_date = as.Date(co2_present_df$week))
 ```
-
-
-## Recent Trends in Atmospheric Carbon 
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[b]{0.9\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_deseasoned_ts.png}
-    \setlength{\belowcaptionskip}{-5pt}
-    \caption{De-seasoned series\label{fig:notrend_ts}}
-  \end{subfigure}
-  \centering
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_acf_ns.png}
-    \caption{ACF\label{fig:notrend_acf}}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_pacf_ns.png}
-    \caption{PACF\label{fig:notrend_pacf}}
-  \end{subfigure}
-  \setlength{\belowcaptionskip}{-10pt}
-  \caption{Diagnostic plots for de-seasoned series of [$CO_2$] after 1996\label{fig:notrend_plots}}
-\end{figure}
-
-Atmospheric $CO_{2}$ level is plotted in \autoref{fig:OldModels}(black trace), and shows relentless increase even at the remote Hawaiian island. In fact, the $CO_{2}$ emissions level is rising at a higher rate between 2010 and now than the period before 1996, as demonstrated by the steepening slope in the chart below. In general, the trend is similar to the trend observed before 1996: steady uptrend.\hfill\break\indent After removing yearly variability from weekly data by differencing with lag 52 the series becomes close to stationary, although with some upward trend (\autoref{fig:notrend_ts}). ACF plot (\autoref{fig:notrend_acf}) of the series shows gradual decay and PACF plot (\autoref{fig:notrend_pacf}) has a few significant peaks up to lag 4. These features are indicative of AR process, but presence of upward trend complicates the analysis. A grid search of model parameters, including differencing parameter will be required for precise model allocation. 
 
 ```{r read objects from 1997 report}
 co2_df <- readRDS("co2_df.df")
@@ -323,19 +286,6 @@ p_value_slope <- 2 * pt(abs(t_stat_slope), df = df, lower.tail = FALSE)
 
 
 ```
-# Models and Forecasts 
-In this section we will evaluate performance of historic models and generate new models based on the most recent data. 
-
-## 1997 Models vs realized data 
-\autoref{fig:OldModels} demonstrates the recent trends in [$CO_{2}$] along with the models fitted on the data prior to 1997. It is clear that ever accelerating trend continues, with no noticeable slow down or even reduced acceleration. Clearly, accuracy of predictions from the linear model does not justify even electricity spent on fitting this model. The trend is accelerating and linear model grossly underestimates the real concentration. Remarkably, simple quadratic model augmented with months as categories is extremely accurate, capturing both accelerating trend and seasonal variability 25 years into the future! Our best ARIMA model underestimates real observations only slightly and its performance is still unexpetedly good for predictions that far out. Worth noticing that both seasonal models perform extremely well up until approximately 2016, when the real trend seemed to have had an additional boost. At then time ARIMA model started falling behind at an increased rate. That might be a statistical fluke, or might indicate the change in the $CO_{2}$ emissions.
-
-## Performance of 1997 linear and ARIMA models 
-\begin{wrapfigure}[16]{r}{0.5\textwidth}
-    \centering
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_MZreg.png}
-    \caption{Mincer-Zarnowitz regression for 1997 ARIMA model\label{fig:MZreg}}
-\end{wrapfigure} 
-It appears that the first time [$CO_{2}$] exceeded 420 ppm was in Feb 2022 and the last time it was that low was in Mar 2023. It is unlikely it will return to this value any time soon. That correlates surprisingly well with out 25 year-old prediction that it will reach this threshold on `r expected.420`. As predicted, we are still far away from crossing 500 ppm threshold.\hfill\break\indent In this case, an RMSE of `r round(RMSE, digits = 1)` means that our model, on average, makes an error of about `r round(RMSE, digits = 1)` ppm in its predictions. \hfill\break\indent We use Mincer-Zarnowitz regression to quantify predictive power of our model. To avoid extrapolation too far from the data, we shift both predicted and actual data by 365 ppm. Intercept of this regression is `r round(MZ_reg$coefficients[1], digits=3)` and  slope is `r round(MZ_reg$coefficients[2], digits=3)`. Given how close these parameters are to 0 and 1, we conclude that our ARIMA model has high predictive power. t-test fails to reject hypothesis that intercept is not 0 with p value `r round(p_value_intercept, digits = 2)`. However, t-test rejects hypothesis that slope is 1 with t-statistic `r round(t_stat_slope, digits =1)`. This is likely due to the high number of data points, which makes even small deviations statistically significant. Given how close the slope value to 1, we believe that this deviation is not practically significant.
 
 ```{r plot MZ regression}
 plot_MZreg <- comparison %>% ggplot() + 
@@ -405,28 +355,6 @@ dual_arima <- arima(co2_train$ppm,
 arima_bic <- find_bic(final_arima, co2_train$ppm)
 dual_arima_bic <- find_bic(dual_arima, co2_train$ppm)
 ```
-## Best models on present data
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_arimaacf.png}
-    \caption{SARIMA(1.1.2)(0.1.1)[52] \label{fig:resid_acf}}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.45\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_dualarimaacf.png}
-    \caption{SARIMA(1.2.2)(0.1.1)[52] \label{fig:resid_acf_dual}}
-  \end{subfigure}
-  \caption{ACF plots for SARIMA model residuals}
-\end{figure}
-In this section, we will compare performance of various models in terms of their predictive power. We will save a small portion of our data, after June 2021, as a testing set. We will use the data from 1998 to 2021 as a training set to generate the models. We decided to not use pre-1998 data as there were at least two areas of irregularity: around gas price hike early in the 1970 and around Asian economic crisis of the 1990's.
-\begin{wrapfigure}[14]{r}{0.5\textwidth}
-    \centering
-    \vspace{-\normalbaselineskip}
-    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_rawacf.png}
-    \caption{ACF plot for residuals of ARIMA(2.1.3) model\label{fig:raw_acf}}
-\end{wrapfigure} 
-We first focus on seasonally adjusted training data. Grid search of the model space, similar to what we performed in 1997, yields ARIMA(0.1.2)  as the most suitable model with the lowest BIC. Using this model as a baseline, we shift to non-seasonally adjusted data and compensate by adding a seasonal component to our models. The search restricted to PDQ parameter variations shows that  SARIMA(1.1.2)(0.1.1)[52] has the lowest BIC of `r round(arima_bic, digits =1)`. \autoref{fig:resid_acf} shows that ACF plot for this model residuals hardly has significant values, a good indication of the in-sample performance. Building up on our experience from 1997, we also fitted a double-differencing model SARIMA(1.2.2)(0.1.1) that we expect to have better long-term performance. This model has increased BIC of `r round(dual_arima_bic, digits =1)` and demonstrates virtually the same pattern in residual ACF plot (\autoref{fig:resid_acf_dual}). We believe that short-term increased accuracy might not be relevant and simpler model would be better because of reduced prediction uncertainty. However, for longer-term predictions the additional non-linearity of double-differencing will be beneficial.  
 
 ```{r Test residuals, results='hide'}
 # Visualize ACF plot of its residuals
@@ -485,20 +413,18 @@ resid_raw_acf_plot <- arima_raw%>%
   acf(plot = FALSE) %>%
   autoplot() + coord_cartesian(xlim = c(1, 20)) +
   # Axis text
-  theme(axis.text.x=element_text(size=20), 
-        axis.text.y=element_text(size=20), 
-        axis.title.x=element_text(size=20),
-        axis.title.y=element_text(size=20)) +
+  theme(axis.text.x=element_text(size=14), 
+        axis.text.y=element_text(size=14), 
+        axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14)) +
   # Lines
   theme(axis.line = element_line(colour = "black"),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
     panel.background = element_blank())
-ggsave(filename = "./figures/plot2_rawacf.png", plot = resid_raw_acf_plot, device = "png", units = c("in"), height = 2.5, width = 3)
+ggsave(filename = "./figures/plot2_rawacf.png", plot = resid_raw_acf_plot, device = "png", units = c("in"), height = 2.5, width = 3.5)
 ```
-
-Fitting ARIMA models to raw training data with no seasonal adjustments yields inferior models. Grid search of the model space, restricted to pdq parameters only, yields ARIMA(2.1.3)  as the most suitable model with the lowest BIC. However, its BIC `r round(arima_raw_bic, digits = 1)` is significantly higher than that of SARIMA models (`r round(arima_bic, digits =1)` for SARIMA (1.1.2)(0.1.1)) and ACF plot of its residuals (\autoref{fig:raw_acf}) has more significant peaks. It is not clear what advantage ARIMA would have over SARIMA in this context.
 
 ```{r Forecast, results='hide'}
 frcst_length <- 52 * (2122 - 2021)
@@ -543,21 +469,6 @@ frcst_arima <- ggplot() +
 
 ggsave(filename = "./figures/plot2_frcst_arima.png", plot = frcst_arima, device = "png", units = c("in"), height = 4, width = 7)
 ```
-
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[b]{0.65\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_frcst_arima.png}
-    \caption{Raw data \label{fig:frcst2y}}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[b]{0.32\textwidth}
-    \includegraphics[width=\textwidth]{./figures/plot2_frcst_nsa.png}
-    \caption{Deseasoned data \label{fig:frcst2y_raw}}
-  \end{subfigure}
-  \setlength{\belowcaptionskip}{-30pt}
-  \caption{Predictive performance of the fitted models}
-\end{figure}
 
 ```{r qaud on deseasoned data}
 model.quad <- lm(formula = deseasoned ~ index + I(index^2), data = co2_train)
@@ -606,9 +517,6 @@ frcst_arima_nsa <- ggplot() +
 ggsave(filename = "./figures/plot2_frcst_nsa.png", plot = frcst_arima_nsa, device = "png", units = c("in"), height = 4, width = 3)
 ```
 
-Predictive performance of the three models discussed above is illustrated by \autoref{fig:frcst2y}. Both SARIMA models closely match observed data. Confidence interval of SARIMA(1.1.2)(0.1.1) shown in yellow, contains test data throughout whole region. ARIMA model, lacking seasonal component, fails almost immediately. Fitting quadratic model to de-seasoned data demonstrates very good performance, as does ARIMA model (\autoref{fig:frcst2y_raw}). 
-
-## Forecasts: How bad could it get?
 ```{r forecast rising CO2 levels}
 # Return the date that the given series first hit x num
 first.date <- function(series, num) {
@@ -646,9 +554,96 @@ prediction.2122.lower <- df_toPlot$lower[prediction.2122.index]
 prediction.2122.expected <- df_toPlot$mean[prediction.2122.index]
 prediction.2122.upper <- df_toPlot$upper[prediction.2122.index]
 ```
+\renewcommand{\columnsep}{10pt}
+# Introduction
+\begin{figure}[ht]
+  \includegraphics[width=.9\linewidth]{./figures/plot2_ts.png}
+  \caption{Recent trend in [$CO_2$] and models trained on pre-1997 data\label{fig:OldModels}}
+\end{figure} 
+In follow-up to our 1997 report we continue investigating the trend of rising $CO_2$ levels and whether or not it is likely caused by a larger trend or stochastic effects. 
+
+# Mona Loa $CO_{2}$ Data 
+NASA \href{https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_daily_mlo.csv}{provides} daily measurement of [$CO_2$] that we download for our analysis.\hfill\break\indent In April of 2019 the Mauna Loa laboratory updated their equipment to measure $CO_2$ with a new technique called Cavity Ring-Down Spectroscopy (CRDS) in contrast to the prior infrared absorption technique. As such, all data from April 2019 onwards will contain measurements using the new method. Additionally, due to eruptions at the Mauna Loa site in 2022, data from December 2022 onwards are from a site at the Maunakea laboratory.
+
+## Recent Trends in Atmospheric Carbon 
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.9\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_deseasoned_ts.png}
+    \setlength{\belowcaptionskip}{-5pt}
+    \caption{De-seasoned series\label{fig:notrend_ts}}
+  \end{subfigure}
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_acf_ns.png}
+    \caption{ACF\label{fig:notrend_acf}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_pacf_ns.png}
+    \caption{PACF\label{fig:notrend_pacf}}
+  \end{subfigure}
+  \setlength{\belowcaptionskip}{-10pt}
+  \caption{Diagnostic plots for de-seasoned series of [$CO_2$] after 1996\label{fig:notrend_plots}}
+\end{figure}
+Atmospheric $CO_{2}$ level is plotted in \autoref{fig:OldModels}(black trace), and shows relentless increase even at the remote Hawaiian island. In fact, the $CO_{2}$ emissions level is rising at a higher rate between 2010 and now than the period before 1996, as demonstrated by the steepening slope in the chart below. In general, the trend is similar to the trend observed before 1996: steady uptrend.\hfill\break\indent After removing yearly variability from weekly data by differencing with lag 52 the series becomes close to stationary, although with some upward trend (\autoref{fig:notrend_ts}). ACF plot (\autoref{fig:notrend_acf}) of the series shows gradual decay and PACF plot (\autoref{fig:notrend_pacf}) has a few significant peaks up to lag 4. These features are indicative of AR process, but presence of upward trend complicates the analysis. A grid search of model parameters, including differencing parameter will be required for precise model allocation. 
+
+# Models and Forecasts 
+In this section we will evaluate performance of historic models and generate new models based on the most recent data. 
+
+## 1997 Models vs realized data 
+\autoref{fig:OldModels} demonstrates the recent trends in [$CO_{2}$] along with the models fitted on the data prior to 1997. It is clear that ever accelerating trend continues, with no noticeable slow down or even reduced acceleration. Clearly, accuracy of predictions from the linear model does not justify even electricity spent on fitting this model. The trend is accelerating and linear model grossly underestimates the real concentration. Remarkably, simple quadratic model augmented with months as categories is extremely accurate, capturing both accelerating trend and seasonal variability 25 years into the future! Our best ARIMA model underestimates real observations only slightly and its performance is still unexpetedly good for predictions that far out. Worth noticing that both seasonal models perform extremely well up until approximately 2016, when the real trend seemed to have had an additional boost. At then time ARIMA model started falling behind at an increased rate. That might be a statistical fluke, or might indicate the change in the $CO_{2}$ emissions.
+
+## Performance of 1997 linear and ARIMA models 
+\begin{wrapfigure}[16]{r}{0.5\textwidth}
+    \centering
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_MZreg.png}
+    \caption{Mincer-Zarnowitz regression for 1997 ARIMA model\label{fig:MZreg}}
+\end{wrapfigure} 
+It appears that the first time [$CO_{2}$] exceeded 420 ppm was in Feb 2022 and the last time it was that low was in Mar 2023. It is unlikely it will return to this value any time soon. That correlates surprisingly well with out 25 year-old prediction that it will reach this threshold on `r expected.420`. As predicted, we are still far away from crossing 500 ppm threshold.\hfill\break\indent In this case, an RMSE of `r round(RMSE, digits = 1)` means that our model, on average, makes an error of about `r round(RMSE, digits = 1)` ppm in its predictions. \hfill\break\indent We use Mincer-Zarnowitz regression to quantify predictive power of our model. To avoid extrapolation too far from the data, we shift both predicted and actual data by 365 ppm. Intercept of this regression is `r round(MZ_reg$coefficients[1], digits=3)` and  slope is `r round(MZ_reg$coefficients[2], digits=3)`. Given how close these parameters are to 0 and 1, we conclude that our ARIMA model has high predictive power. t-test fails to reject hypothesis that intercept is not 0 with p value `r round(p_value_intercept, digits = 2)`. However, t-test rejects hypothesis that slope is 1 with t-statistic `r round(t_stat_slope, digits =1)`. This is likely due to the high number of data points, which makes even small deviations statistically significant. Given how close the slope value to 1, we believe that this deviation is not practically significant.
+
+## Best models on present data
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_arimaacf.png}
+    \caption{SARIMA(1.1.2)(0.1.1)[52] \label{fig:resid_acf}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_dualarimaacf.png}
+    \caption{SARIMA(1.2.2)(0.1.1)[52] \label{fig:resid_acf_dual}}
+  \end{subfigure}
+  \caption{ACF plots for SARIMA model residuals}
+\end{figure}
+In this section, we will compare performance of various models in terms of their predictive power. We will save a small portion of our data, after June 2021, as a testing set. We will use the data from 1998 to 2021 as a training set to generate the models. We decided to not use pre-1998 data as there were at least two areas of irregularity: around gas price hike early in the 1970 and around Asian economic crisis of the 1990's.
+\begin{wrapfigure}[14]{r}{0.5\textwidth}
+    \centering
+    \vspace{-\normalbaselineskip}
+    \includegraphics[height=11\normalbaselineskip]{./figures/plot2_rawacf.png}
+    \caption{ACF plot for residuals of ARIMA(2.1.3) model\label{fig:raw_acf}}
+\end{wrapfigure} 
+We first focus on seasonally adjusted training data. Grid search of the model space, similar to what we performed in 1997, yields ARIMA(0.1.2)  as the most suitable model with the lowest BIC. Using this model as a baseline, we shift to non-seasonally adjusted data and compensate by adding a seasonal component to our models. The search restricted to PDQ parameter variations shows that  SARIMA(1.1.2)(0.1.1)[52] has the lowest BIC of `r round(arima_bic, digits =1)`. \autoref{fig:resid_acf} shows that ACF plot for this model residuals hardly has significant values, a good indication of the in-sample performance. Building up on our experience from 1997, we also fitted a double-differencing model SARIMA(1.2.2)(0.1.1) that we expect to have better long-term performance. This model has increased BIC of `r round(dual_arima_bic, digits =1)` and demonstrates virtually the same pattern in residual ACF plot (\autoref{fig:resid_acf_dual}). We believe that short-term increased accuracy might not be relevant and simpler model would be better because of reduced prediction uncertainty. However, for longer-term predictions the additional non-linearity of double-differencing will be beneficial. \hfill\break\indent Fitting ARIMA models to raw training data with no seasonal adjustments yields inferior models. Grid search of the model space, restricted to pdq parameters only, yields ARIMA(2.1.3)  as the most suitable model with the lowest BIC. However, its BIC `r round(arima_raw_bic, digits = 1)` is significantly higher than that of SARIMA models (`r round(arima_bic, digits =1)` for SARIMA (1.1.2)(0.1.1)) and ACF plot of its residuals (\autoref{fig:raw_acf}) has more significant peaks. It is not clear what advantage ARIMA would have over SARIMA in this context.
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_frcst_arima.png}
+    \caption{Raw data \label{fig:frcst2y}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{./figures/plot2_frcst_nsa.png}
+    \caption{Deseasoned data \label{fig:frcst2y_raw}}
+  \end{subfigure}
+  \setlength{\belowcaptionskip}{-30pt}
+  \caption{Predictive performance of the fitted models}
+\end{figure}
+Predictive performance of the three models discussed above is illustrated by \autoref{fig:frcst2y}. Both SARIMA models closely match observed data. Confidence interval of SARIMA(1.1.2)(0.1.1) shown in yellow, contains test data throughout whole region. ARIMA model, lacking seasonal component, fails almost immediately. Fitting quadratic model to de-seasoned data demonstrates very good performance, as does ARIMA model (\autoref{fig:frcst2y_raw}).
+
+## Forecasts: How bad could it get?
 \begin{wraptable}[6]{r}{0.6\textwidth}
-  \setlength{\belowcaptionskip}{-15pt}
-  \caption{[$CO_{2}$] thresholds crossing}\label{wrap-tab:tab1}
+  \setlength{\belowcaptionskip}{-10pt}
+  \caption{$CO_{2}$ thresholds crossing}\label{wrap-tab:tab1}
   \begin{tabular}{llll}
     \toprule 
     ppm & As early as & Expected & Last time \\
@@ -658,10 +653,8 @@ prediction.2122.upper <- df_toPlot$upper[prediction.2122.index]
     \bottomrule
   \end{tabular}
 \end{wraptable}
-
 Based on the SARIMA(1.2.2)(0.1.1) model that we deem more suitable for long-term forecasting, we can attempt to predict some important milestones. For the year 2122 we expect $[CO_{2}]$ to be `r round(prediction.2122.expected, 0)` ppm  with 95% CI from `r round(prediction.2122.lower, 0)` ppm to `r round(prediction.2122.upper, 0)` ppm. Our previous model was successful at predicting data 25 years out, and the overall trend remains the same for the past 60 years, so we are cautiously optimistic about the quality of this prediction. There is so far no sign of slowing down of the trend, so sigmoidal inflection will not happen any time soon. \autoref{wrap-tab:tab1} summarizes when 420 ppm and 500 ppm thresholds might be crossed. Fast-increasing uncertainty in predictions, typical for SARIMA models, limits our ability to make meaningful predictions about distant future. For instance, despite fast growing trend, the model can not exclude possibility that atmospheric $CO_{2}$ will never exceed 500 ppm thresholds.
 
 # Conclusions 
-
 In this report, we assessed data from the Mona Loa observatory to model and predict atmospheric CO2 concentrations for the next century. Compared to the last report, we have access to present data, which improves our predictive power. The forecast from our modeling is only valid assuming all forces that currently influence atmospheric carbon remain unchanged. Given this reasonable assumption, our model still predicts a very grim future for the global climate if no actions are taken. In fact, our predictions are fairly close to the last report, which indicates that nothing has been done to stop the trend. The global CO2 level will reach a whopping `r round(prediction.2122.expected, 0)` ppm in 2122 based on 
 our forecast, making the planet uninhabitable.
