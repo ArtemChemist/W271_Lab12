@@ -575,7 +575,11 @@ expected.date <- function(series, num) {
 
 last.date <- function(series, num) {
   vec <- which(series < num)
-  return(df_toPlot$my_date[vec[length(vec)]])
+  if (length(vec) < length(series)) {
+    return(df_toPlot$my_date[vec[length(vec)]])
+    } else {
+    return(NA)
+    }
 }
 
 # When CO2 is expected to hit 420ppm

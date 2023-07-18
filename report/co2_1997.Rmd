@@ -490,21 +490,23 @@ expected.date <- function(series, num) {
 }
 
 last.date <- function(series, num) {
-    vec <- which(series < num)
-  return(df_frcst_long$my_date[vec[length(vec)]])
+  vec <- which(series < num)
+  if (length(vec) < length(series)) {
+    return(df_toPlot$my_date[vec[length(vec)]])
+    } else {
+    return(NA)
+    }
 }
 
 # When CO2 is expected to hit 420ppm
 first_time.420 <- first.date(df_frcst_long$upper, 420)
 expected.420 <- expected.date(df_frcst_long$mean, 420)
 last_time.420 <- last.date(df_frcst_long$lower, 420)
-last_time.420 <- "NA" # Hardcoded to NA since it never reaches 500ppm
 
 # When CO2 is expected to hit 500ppm
 first_time.500 <- first.date(df_frcst_long$upper, 500)
 expected.500 <- expected.date(df_frcst_long$mean, 500)
 last_time.500 <- last.date(df_frcst_long$lower, 500)
-last_time.500 <- "NA" # Hardcoded to NA since it never reaches 500ppm
 
 # Expected CO2 levels in the year 2100
 prediction.2100.index <- match(as.Date("2100-01-01"), df_frcst_long$my_date)
