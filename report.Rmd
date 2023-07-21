@@ -76,11 +76,6 @@ summary(linear_model)
 
 The linear model is a poor model because the p-value of the months is > 0.05. Therefore we lack evidence to reject the null hypothesis and are not able to conclude that there is a linear relationship between Looking at the rsidual plots, we can see a trend in the residuals. The ACF plot also shows strong autocorrelation, violating the assumption of a linear model. Therefore, a linear model does not sufficiently describe the relationship.
 
-
-
-
-
-
 ### 2b: ARIMA Model
 
 ```{r}
@@ -106,9 +101,6 @@ predicted %>%
     y = "CO2_PPM"
   )
 ```
-
-
-
 
 ```{r}
 forecast_1997 = forecast(arima_model, h = 2000, level = c(95))
